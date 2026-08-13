@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from dataclasses import asdict
 from pathlib import Path
 
+from .doctor import render_checks, run_checks, worst_status
 from .importer import ImportResult, import_ledger
 from .paths import ledger_root
 from .record import record
@@ -66,6 +67,10 @@ def _build_parser() -> tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
         choices=("skip", "replace", "rename"),
         default="skip",
     )
+    doctor_parser = subparsers.add_parser(
+        "doctor", help="Diagnose worklog installation and configuration."
+    )
+    doctor_parser.add_argument("--json", action="store_true")
     list_parser = subparsers.add_parser(
         "list", help="List recent session worklog checkpoints."
     )
@@ -125,6 +130,15 @@ def _run_import(args: argparse.Namespace) -> int:
     return 1 if result.errors else 0
 
 
+def _run_doctor(args: argparse.Namespace) -> int:
+    checks = run_checks()
+    if args.json:
+        print(json.dumps([asdict(check) for check in checks], sort_keys=True))
+    else:
+        print(render_checks(checks))
+    return 1 if worst_status(checks) == "fail" else 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the worklog command-line interface."""
     parser, add_parser = _build_parser()
@@ -137,6 +151,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "import":
         return _run_import(args)
+    if args.command == "doctor":
+        return _run_doctor(args)
     if not args.done:
         add_parser.error("at least one --done item is required")
 
