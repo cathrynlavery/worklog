@@ -8,7 +8,9 @@ import os
 import sys
 from collections.abc import Sequence
 from dataclasses import asdict
+from pathlib import Path
 
+from .importer import ImportResult, import_ledger
 from .paths import ledger_root
 from .record import record
 from .view import collect_entries, filter_entries, parse_since, render
@@ -53,6 +55,17 @@ def _build_parser() -> tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
     add_parser.add_argument("--status", choices=("completed", "partial"))
 
     subparsers.add_parser("where", help="Print the resolved ledger root.")
+    import_parser = subparsers.add_parser(
+        "import", help="Import an existing accomplishment ledger."
+    )
+    import_parser.add_argument("source", type=Path)
+    import_parser.add_argument("--dest", type=Path)
+    import_parser.add_argument("--dry-run", action="store_true")
+    import_parser.add_argument(
+        "--on-conflict",
+        choices=("skip", "replace", "rename"),
+        default="skip",
+    )
     list_parser = subparsers.add_parser(
         "list", help="List recent session worklog checkpoints."
     )
@@ -84,6 +97,34 @@ def _run_viewer(args: argparse.Namespace) -> int:
     return 0
 
 
+def _print_import_summary(result: ImportResult) -> None:
+    if result.dry_run:
+        print("DRY RUN — no files were written.")
+    print(f"Files imported: {result.imported_files}")
+    print(f"Checkpoints imported: {result.imported_checkpoints}")
+    print(f"Skipped (existing): {result.skipped_existing}")
+    print(f"Skipped (unparsable): {result.skipped_unparsable}")
+    print(f"Errors: {len(result.errors)}")
+    for error in result.errors:
+        print(f"  - {error}")
+
+
+def _run_import(args: argparse.Namespace) -> int:
+    try:
+        result = import_ledger(
+            args.source,
+            dest=args.dest,
+            dry_run=args.dry_run,
+            on_conflict=args.on_conflict,
+        )
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 2
+
+    _print_import_summary(result)
+    return 1 if result.errors else 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the worklog command-line interface."""
     parser, add_parser = _build_parser()
@@ -94,6 +135,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "where":
         print(ledger_root())
         return 0
+    if args.command == "import":
+        return _run_import(args)
     if not args.done:
         add_parser.error("at least one --done item is required")
 

@@ -11,7 +11,7 @@ import uuid
 from pathlib import Path
 from typing import Literal, Sequence
 
-from .paths import sessions_dir
+from .paths import ensure_private_dir, sessions_dir
 from .redact import redact
 
 MAX_ITEM_LENGTH = 1_000
@@ -144,8 +144,7 @@ def record(
     checkpoint_status = status or ("partial" if remaining else "completed")
     clean_title = clean_item(title)
 
-    session_path = sessions_dir() / agent_key
-    session_path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    session_path = ensure_private_dir(sessions_dir() / agent_key)
     path = session_path / f"{session_key}.md"
 
     header = (

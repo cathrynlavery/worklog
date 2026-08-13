@@ -17,6 +17,30 @@ def _absolute_without_resolving(value: str | Path) -> Path:
     return (logical_pwd / path).absolute()
 
 
+def ensure_private_dir(path: Path) -> Path:
+    """Create each missing directory level with mode 0700 and return path."""
+    missing: list[Path] = []
+    current = Path(path)
+    while not current.is_dir():
+        if current.exists() or current.is_symlink():
+            raise NotADirectoryError(f"not a directory: {current}")
+        missing.append(current)
+        parent = current.parent
+        if parent == current:
+            raise FileNotFoundError(f"no existing ancestor for directory: {path}")
+        current = parent
+
+    for directory in reversed(missing):
+        try:
+            os.mkdir(directory, mode=0o700)
+        except FileExistsError:
+            if not directory.is_dir():
+                raise
+        else:
+            os.chmod(directory, 0o700)
+    return Path(path)
+
+
 def ledger_root() -> Path:
     """Return the configured ledger root without creating it."""
     configured = os.environ.get("WORKLOG_DIR")
