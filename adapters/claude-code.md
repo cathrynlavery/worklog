@@ -29,6 +29,10 @@ conversational or no-op turns, secrets, credentials, PHI, raw transcripts, or
 unverified claims.
 ```
 
+`worklog add` enforces evidence: provide a commit SHA, test result, URL, or
+artifact path. Use `--allow-no-evidence` only in the rare case where verified
+work genuinely has nothing citable.
+
 Check the integration without disclosing the settings file:
 
 ```sh

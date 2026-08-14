@@ -106,6 +106,7 @@ def record(
     title: str,
     done: Sequence[str],
     evidence: Sequence[str] = (),
+    allow_no_evidence: bool = False,
     remaining: Sequence[str] = (),
     agent: str | None = None,
     session_id: str | None = None,
@@ -116,6 +117,11 @@ def record(
     """Append a checkpoint and return its per-session ledger path."""
     if not done:
         raise ValueError("at least one done item is required")
+    if not evidence and not allow_no_evidence:
+        raise ValueError(
+            "evidence is required: provide a commit SHA, test result, URL, "
+            "or artifact path"
+        )
     if status not in (None, "completed", "partial"):
         raise ValueError("status must be 'completed' or 'partial'")
 

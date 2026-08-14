@@ -19,9 +19,12 @@ def build_context(session_id: str) -> str:
         f"This is session {session_id}. If THIS turn produced material, verified "
         "work, record it before the final response with `worklog add --agent "
         f"claude --session-id {quoted_session_id} --title '...' --done '...' "
-        "--evidence '...'` and optional `--remaining '...'`. Do not log "
-        "conversational or no-op turns, secrets, credentials, PHI, raw "
-        "transcripts, or unverified claims."
+        "--evidence '...'` and optional `--remaining '...'`. Evidence is "
+        "required and must be a commit SHA, test result, URL, or artifact "
+        "path. Use `--allow-no-evidence` only in the rare case where verified "
+        "work genuinely has nothing citable. Do not log conversational or "
+        "no-op turns, secrets, credentials, PHI, raw transcripts, or "
+        "unverified claims."
     )
 
 

@@ -55,6 +55,7 @@ def _build_parser() -> tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
     add_parser.add_argument("--title", required=True)
     add_parser.add_argument("--done", action="append", default=[])
     add_parser.add_argument("--evidence", action="append", default=[])
+    add_parser.add_argument("--allow-no-evidence", action="store_true")
     add_parser.add_argument("--remaining", action="append", default=[])
     add_parser.add_argument("--status", choices=("completed", "partial"))
 
@@ -242,6 +243,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             title=args.title,
             done=args.done,
             evidence=args.evidence,
+            allow_no_evidence=args.allow_no_evidence,
             remaining=args.remaining,
             status=args.status,
         )

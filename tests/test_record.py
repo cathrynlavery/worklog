@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import os
 import unittest
 from pathlib import Path
 from unittest import mock
 
+from worklog import cli
 import worklog.record as record_module
 from worklog.record import MAX_ITEM_LENGTH, git_metadata, safe_component
 from worklog.view import parse_session_file
@@ -28,6 +31,7 @@ class RecordTests(TempLedger):
         arguments: dict[str, object] = {
             "title": "Recorded checkpoint",
             "done": ("Implemented the requested behavior.",),
+            "evidence": ("Test suite passed.",),
             "agent": "codex",
             "session_id": "session-123",
             "cwd": self.sandbox,
@@ -91,6 +95,31 @@ class RecordTests(TempLedger):
         with self.assertRaisesRegex(ValueError, "cannot be blank"):
             self.record(done=(" \t\n ",))
 
+    def test_missing_evidence_is_rejected_with_examples(self) -> None:
+        with self.assertRaises(ValueError) as raised:
+            self.record(evidence=())
+
+        message = str(raised.exception)
+        for evidence_type in ("commit SHA", "test result", "URL", "artifact path"):
+            with self.subTest(evidence_type=evidence_type):
+                self.assertIn(evidence_type, message)
+
+    def test_allow_no_evidence_writes_existing_placeholder(self) -> None:
+        path = self.record(evidence=(), allow_no_evidence=True)
+
+        content = path.read_text(encoding="utf-8")
+        self.assertIn("### Evidence\n\n- None recorded.", content)
+
+    def test_record_with_evidence_still_succeeds(self) -> None:
+        path = self.record(evidence=("Artifact: build/report.html",))
+
+        content = path.read_text(encoding="utf-8")
+        self.assertIn("### Evidence\n\n- Artifact: build/report.html", content)
+
+    def test_blank_evidence_item_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "cannot be blank"):
+            self.record(evidence=(" \t\n ",))
+
     def test_overlong_item_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "keep it under"):
             self.record(done=("x" * (MAX_ITEM_LENGTH + 1),))
@@ -135,6 +164,31 @@ class RecordTests(TempLedger):
 
         self.assertEqual(path.parent.name, "claude")
         self.assertEqual(path.name, "claude-session.md")
+
+    def test_cli_requires_evidence_unless_explicitly_allowed(self) -> None:
+        common = [
+            "add",
+            "--title",
+            "t",
+            "--done",
+            "d",
+            "--cwd",
+            str(self.sandbox),
+        ]
+        output = io.StringIO()
+        errors = io.StringIO()
+
+        with contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
+            missing_evidence_code = cli.main(common)
+        self.assertEqual(missing_evidence_code, 2)
+        self.assertIn("evidence is required", errors.getvalue())
+        self.assertFalse(self.root.exists())
+
+        with contextlib.redirect_stdout(output), contextlib.redirect_stderr(errors):
+            evidence_code = cli.main([*common, "--evidence", "e"])
+            allowed_code = cli.main([*common, "--allow-no-evidence"])
+        self.assertEqual(evidence_code, 0)
+        self.assertEqual(allowed_code, 0)
 
 
 if __name__ == "__main__":

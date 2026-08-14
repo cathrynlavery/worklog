@@ -50,6 +50,7 @@ class HookTests(TempLedger):
         instruction = response["additionalContext"]
 
         self.assertIn("worklog add", instruction)
+        self.assertIn("Evidence is required", instruction)
         self.assertIn("Do not log conversational or no-op turns", instruction)
         self.assertIn("unverified claims", instruction)
 

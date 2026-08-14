@@ -85,9 +85,11 @@ The hook does not write anything. The agent decides whether the turn produced
 material, verified work and qualifies for a checkpoint, then calls `worklog
 add`.
 
-Every checkpoint names concrete evidence: a test result, commit, URL, or
-artifact. This rule is what keeps the ledger useful instead of turning it into a
-transcript dump.
+Every checkpoint names concrete evidence: a test result, commit SHA, URL, or
+artifact path. `worklog add` enforces this rule, which keeps the ledger useful
+instead of turning it into a transcript dump. For the rare case where verified
+work genuinely has nothing citable, `--allow-no-evidence` is the deliberate
+exception.
 
 ## Commands
 
@@ -127,7 +129,7 @@ secrets, credentials, PHI, or raw transcripts.
 - An installed schedule points `PYTHONPATH` at this checkout. Moving or deleting
   the directory breaks it; run `worklog install-report` again after moving it.
 - `--status` is inferred as `partial` whenever `--remaining` is passed. This is
-  deliberate. On the author's own ledger, 855 of 868 entries read `partial`.
+  deliberate. On the author's own ledger, 863 of 876 entries read `partial`.
 - SSH federation across machines is not in this version.
 
 ## Requirements and tests
