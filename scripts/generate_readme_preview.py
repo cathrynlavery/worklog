@@ -89,6 +89,13 @@ CHECKPOINTS = {
     ],
 }
 
+PREVIEW_COMPUTERS = {
+    "cathryn": "studio.local",
+    "codex": "silverfox.local",
+    "claude": "studio.local",
+    "hermes": "knox.local",
+}
+
 
 def write_fixture(root: Path, agent: str, checkpoints: list[tuple[str, ...]]) -> None:
     directory = root / "sessions" / agent
@@ -106,7 +113,7 @@ def write_fixture(root: Path, agent: str, checkpoints: list[tuple[str, ...]]) ->
             "- **Branch:** `main`\n"
             "- **Commit:** `8c4a7f2`\n"
             "- **Working tree:** clean\n"
-            "- **Machine:** `studio.local`\n\n"
+            f"- **Machine:** `{PREVIEW_COMPUTERS[agent]}`\n\n"
             "### Accomplished\n\n"
             f"- [x] {done}\n\n"
             "### Evidence\n\n"

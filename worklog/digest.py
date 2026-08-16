@@ -10,7 +10,7 @@ import tempfile
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
+from typing import Callable, Iterable
 
 from .paths import ensure_private_dir, reports_dir
 from .report import _plain_text
@@ -22,6 +22,7 @@ SECTION_HEADER = re.compile(r"^### .+$", re.MULTILINE)
 CHECKED_ITEM = re.compile(r"^- \[[xX]\] (.+)$", re.MULTILINE)
 UNCHECKED_ITEM = re.compile(r"^- \[ \] (.+)$", re.MULTILINE)
 BULLET_ITEM = re.compile(r"^- (?!\[[xX ]\] )(.+)$", re.MULTILINE)
+MACHINE_ITEM = re.compile(r"^- \*\*Machine:\*\*\s+(.+)$", re.MULTILINE)
 PLAIN_URL = re.compile(r"^https?://[^\s]+$")
 
 
@@ -32,6 +33,7 @@ class CheckpointDetails:
     done: tuple[str, ...]
     evidence: tuple[str, ...]
     remaining: tuple[str, ...]
+    machine: str | None
 
 
 def digest_window(
@@ -88,10 +90,10 @@ def _checkpoint_details(
             cache[entry.path] = None
     text = cache[entry.path]
     if text is None:
-        return CheckpointDetails((), (), ())
+        return CheckpointDetails((), (), (), None)
     block = _checkpoint_block(text, entry)
     if block is None:
-        return CheckpointDetails((), (), ())
+        return CheckpointDetails((), (), (), None)
 
     done = tuple(
         _plain_text(match.group(1))
@@ -108,7 +110,15 @@ def _checkpoint_details(
         for match in UNCHECKED_ITEM.finditer(_section(block, "Remaining"))
         if _plain_text(match.group(1))
     )
-    return CheckpointDetails(done, evidence, remaining)
+    machine_match = MACHINE_ITEM.search(block)
+    machine = None
+    if machine_match is not None:
+        machine = _plain_text(machine_match.group(1))
+        if len(machine) >= 2 and machine.startswith("`") and machine.endswith("`"):
+            machine = machine[1:-1].strip()
+        if not machine:
+            machine = None
+    return CheckpointDetails(done, evidence, remaining, machine)
 
 
 def _date_label(period: str, since: dt.datetime, until: dt.datetime) -> str:
@@ -171,7 +181,7 @@ def build_digest(
     until: dt.datetime,
     generated_at: dt.datetime | None = None,
 ) -> str:
-    """Return one self-contained HTML digest with local project navigation."""
+    """Return one self-contained HTML digest with local multidimensional navigation."""
     if period not in {"daily", "weekly"}:
         raise ValueError("period must be 'daily' or 'weekly'")
     selected = sorted(
@@ -186,6 +196,7 @@ def build_digest(
 
     cache: dict[str, str | None] = {}
     details = {entry: _checkpoint_details(entry, cache) for entry in selected}
+    computers = {details[entry].machine or "Unknown computer" for entry in selected}
     remaining: list[tuple[str, str]] = []
     seen_remaining: set[tuple[str, str]] = set()
     for entry in selected:
@@ -196,92 +207,137 @@ def build_digest(
             seen_remaining.add(key)
             remaining.append((entry.project, item))
 
-    grouped: dict[str, list[Entry]] = defaultdict(list)
-    for entry in selected:
-        grouped[entry.project].append(entry)
-    ordered_projects = sorted(
-        grouped.items(),
-        key=lambda item: (
-            -len(item[1]),
-            -_parse_timestamp(item[1][0].timestamp).timestamp(),
-            item[0].casefold(),
-        ),
-    )
-
-    remaining_by_project: dict[str, list[str]] = defaultdict(list)
-    for project, item in remaining:
-        remaining_by_project[project].append(item)
-
-    picker_options: list[str] = []
-    project_cards: list[str] = []
-    project_views: list[str] = []
-    for project_index, (project, project_entries) in enumerate(ordered_projects):
-        project_id = f"project-{project_index}"
-        project_open = remaining_by_project[project]
-        picker_options.append(
-            f'<option value="{project_id}">{_safe(project)} '
-            f"({len(project_entries)})</option>"
+    def ordered_groups(
+        key_for_entry: Callable[[Entry], str],
+    ) -> list[tuple[str, list[Entry]]]:
+        grouped: dict[str, list[Entry]] = defaultdict(list)
+        for entry in selected:
+            grouped[key_for_entry(entry)].append(entry)
+        return sorted(
+            grouped.items(),
+            key=lambda item: (
+                -len(item[1]),
+                -_parse_timestamp(item[1][0].timestamp).timestamp(),
+                item[0].casefold(),
+            ),
         )
 
-        if project_index < 12:
-            preview_titles = "".join(
-                f"<span>{_safe(entry.title)}</span>" for entry in project_entries[:2]
-            )
-            project_cards.append(
-                '<button class="project-card" type="button" '
-                f'data-select-project="{project_id}">'
-                '<span class="project-card-top">'
-                f'<strong>{_safe(project)}</strong><span aria-hidden="true">→</span>'
-                "</span>"
-                f'<span class="project-count">{len(project_entries)} checkpoint'
-                f'{"" if len(project_entries) == 1 else "s"} · '
-                f'{len(project_open)} open</span>'
-                f'<span class="project-preview">{preview_titles}</span>'
-                '<span class="project-link">View project</span>'
-                "</button>"
-            )
+    def computer_for(entry: Entry) -> str:
+        return details[entry].machine or "Unknown computer"
 
-        checkpoints: list[str] = []
-        for entry in project_entries:
-            state = "complete" if entry.status == "completed" else "partial"
-            checkpoints.append(
-                '<article class="checkpoint">'
-                '<div class="checkpoint-rail">'
-                f'<span class="dot {state}"></span>'
-                f'<time>{_entry_time(entry)}</time>'
-                "</div>"
-                '<div class="checkpoint-body">'
-                f'<div class="checkpoint-meta"><span>{_safe(entry.agent)}</span>'
-                f'<span>{_safe(entry.status)}</span></div>'
-                f"<h3>{_safe(entry.title)}</h3>"
-                f"{_detail_block(details[entry])}"
-                "</div></article>"
-            )
-        if project_open:
-            project_open_items = "".join(
-                f"<li><span>{_safe(item)}</span></li>" for item in project_open
-            )
-        else:
-            project_open_items = '<li class="empty">Nothing left open.</li>'
+    def open_items_for(view_entries: list[Entry]) -> list[tuple[str, str]]:
+        items: list[tuple[str, str]] = []
+        seen: set[tuple[str, str]] = set()
+        for entry in view_entries:
+            for item in details[entry].remaining:
+                key = (entry.project.casefold(), item.casefold())
+                if key in seen:
+                    continue
+                seen.add(key)
+                items.append((entry.project, item))
+        return items
 
-        project_views.append(
-            f'<section class="digest-view" id="{project_id}" '
-            'data-digest-view hidden>'
-            '<button class="back-button" type="button" '
-            'data-select-project="overview">← All projects</button>'
-            '<div class="project-layout">'
-            '<section class="project-detail">'
-            '<div class="project-heading">'
-            f'<h2 tabindex="-1">{_safe(project)}</h2>'
-            f'<span>{len(project_entries)} checkpoint'
-            f'{"" if len(project_entries) == 1 else "s"}</span>'
+    def checkpoint_markup(entry: Entry, dimension: str) -> str:
+        state = "complete" if entry.status == "completed" else "partial"
+        metadata: list[str] = []
+        if dimension != "contributor":
+            metadata.append(entry.agent)
+        if dimension != "project":
+            metadata.append(entry.project)
+        if dimension != "computer":
+            metadata.append(computer_for(entry))
+        metadata.append(entry.status)
+        meta_markup = "".join(f"<span>{_safe(item)}</span>" for item in metadata)
+        return (
+            '<article class="checkpoint">'
+            '<div class="checkpoint-rail">'
+            f'<span class="dot {state}"></span>'
+            f'<time>{_entry_time(entry)}</time>'
             "</div>"
-            f'{"".join(checkpoints)}'
-            "</section>"
-            '<aside><section class="open"><h2>Still open here</h2><ul>'
-            f"{project_open_items}</ul></section></aside>"
-            "</div></section>"
+            '<div class="checkpoint-body">'
+            f'<div class="checkpoint-meta">{meta_markup}</div>'
+            f"<h3>{_safe(entry.title)}</h3>"
+            f"{_detail_block(details[entry])}"
+            "</div></article>"
         )
+
+    ordered_projects = ordered_groups(lambda entry: entry.project)
+    ordered_contributors = ordered_groups(lambda entry: entry.agent)
+    ordered_computers = ordered_groups(computer_for)
+
+    picker_groups: list[str] = []
+    project_cards: list[str] = []
+    focus_views: list[str] = []
+    dimensions = (
+        ("project", "Projects", "Project", ordered_projects),
+        ("contributor", "Contributors", "Contributor", ordered_contributors),
+        ("computer", "Computers", "Computer", ordered_computers),
+    )
+    for dimension, group_label, view_label, groups in dimensions:
+        options: list[str] = []
+        for group_index, (group_name, group_entries) in enumerate(groups):
+            view_id = f"{dimension}-{group_index}"
+            options.append(
+                f'<option value="{view_id}">{_safe(group_name)} '
+                f"({len(group_entries)})</option>"
+            )
+
+            view_open = open_items_for(group_entries)
+            if dimension == "project" and group_index < 12:
+                preview_titles = "".join(
+                    f"<span>{_safe(entry.title)}</span>" for entry in group_entries[:2]
+                )
+                project_cards.append(
+                    '<button class="project-card" type="button" '
+                    f'data-select-view="{view_id}">'
+                    '<span class="project-card-top">'
+                    f'<strong>{_safe(group_name)}</strong><span aria-hidden="true">→</span>'
+                    "</span>"
+                    f'<span class="project-count">{len(group_entries)} checkpoint'
+                    f'{"" if len(group_entries) == 1 else "s"} · '
+                    f'{len(view_open)} open</span>'
+                    f'<span class="project-preview">{preview_titles}</span>'
+                    '<span class="project-link">View project</span>'
+                    "</button>"
+                )
+
+            checkpoints = "".join(
+                checkpoint_markup(entry, dimension) for entry in group_entries
+            )
+            if view_open:
+                show_project = dimension != "project"
+                view_open_items = "".join(
+                    f'<li><span>{_safe(item)}</span>'
+                    + (f"<small>{_safe(project)}</small>" if show_project else "")
+                    + "</li>"
+                    for project, item in view_open
+                )
+            else:
+                view_open_items = '<li class="empty">Nothing left open.</li>'
+
+            focus_views.append(
+                f'<section class="digest-view" id="{view_id}" '
+                'data-digest-view hidden>'
+                '<button class="back-button" type="button" '
+                'data-select-view="overview">← All work</button>'
+                '<div class="project-layout">'
+                '<section class="project-detail">'
+                '<div class="project-heading"><div>'
+                f'<span class="view-kind">{view_label}</span>'
+                f'<h2 tabindex="-1">{_safe(group_name)}</h2></div>'
+                f'<span>{len(group_entries)} checkpoint'
+                f'{"" if len(group_entries) == 1 else "s"}</span>'
+                "</div>"
+                f"{checkpoints}"
+                "</section>"
+                '<aside><section class="open"><h2>Still open here</h2><ul>'
+                f"{view_open_items}</ul></section></aside>"
+                "</div></section>"
+            )
+        if options:
+            picker_groups.append(
+                f'<optgroup label="{group_label}">{"".join(options)}</optgroup>'
+            )
 
     overview_remaining = remaining[:8]
     if overview_remaining:
@@ -292,7 +348,7 @@ def build_digest(
         if len(remaining) > len(overview_remaining):
             overview_open_items += (
                 '<li class="more-open">+'
-                f"{len(remaining) - len(overview_remaining)} more · select a project"
+                f"{len(remaining) - len(overview_remaining)} more · choose a view"
                 "</li>"
             )
     else:
@@ -309,8 +365,8 @@ def build_digest(
         overview_activity = (
             '<div class="overview-heading"><div><span class="section-kicker">Overview</span>'
             '<h2>Choose a project.</h2></div>'
-            '<p>Scan the latest outcomes here, then open one project for its full '
-            "timeline and remaining work.</p></div>"
+            '<p>Scan projects here, or use the selector to focus by project, contributor, '
+            "or computer.</p></div>"
             f'<div class="overview-grid">{"".join(project_cards)}</div>'
             f"{project_overflow}"
         )
@@ -320,7 +376,7 @@ def build_digest(
             "this window.</p></section>"
         )
 
-    disabled_selector = " disabled" if not ordered_projects else ""
+    disabled_selector = " disabled" if not selected else ""
 
     period_name = "Daily" if period == "daily" else "Weekly"
     return f"""<!doctype html>
@@ -359,7 +415,7 @@ def build_digest(
     .hero-note {{ padding-left:20px; border-left:2px solid var(--accent); }}
     .hero-note strong {{ display:block; margin-bottom:6px; font:400 23px/1.1 var(--font-serif); }}
     .hero-note span {{ color:var(--muted); font-size:13px; }}
-    .metrics {{ display:grid; grid-template-columns:repeat(4,1fr); margin:0 0 56px;
+    .metrics {{ display:grid; grid-template-columns:repeat(5,1fr); margin:0 0 56px;
       border-bottom:1px solid var(--rule); }}
     .metric {{ min-width:0; padding:24px 20px 27px; border-right:1px solid var(--rule); }}
     .metric:first-child {{ padding-left:0; }}
@@ -416,6 +472,7 @@ def build_digest(
     .project-heading h2:focus {{ outline:none; }}
     .project-heading span {{ color:var(--soft); font:500 10px/1.2 var(--font-mono);
       letter-spacing:.12em; text-transform:uppercase; }}
+    .project-heading .view-kind {{ display:block; margin-bottom:8px; color:var(--accent); }}
     .checkpoint {{ display:grid; grid-template-columns:96px 1fr; padding:27px 0;
       border-bottom:1px solid var(--rule); }}
     .checkpoint:last-child {{ border-bottom:0; }}
@@ -456,6 +513,7 @@ def build_digest(
       .metrics{{grid-template-columns:repeat(2,1fr);margin-bottom:44px}}
       .metric{{padding:20px 12px 22px}} .metric:first-child{{padding-left:0}}
       .metric:nth-child(2){{border-right:0}} .metric:nth-child(3){{padding-left:0}}
+      .metric:nth-child(4){{border-right:0}} .metric-status{{grid-column:1/-1;padding-left:0;border-right:0}}
       .controls{{grid-template-columns:1fr;gap:18px;padding:22px 18px;margin-bottom:44px}}
       .overview-layout,.project-layout{{grid-template-columns:1fr;gap:42px}}
       .overview-heading{{grid-template-columns:1fr;gap:10px}}
@@ -492,16 +550,17 @@ def build_digest(
       <div class="metric"><strong>{len(selected)}</strong><span>checkpoints</span></div>
       <div class="metric"><strong>{len(projects)}</strong><span>projects</span></div>
       <div class="metric"><strong>{len(agents)}</strong><span>contributors</span></div>
-      <div class="metric"><strong>{completed}/{partial}</strong><span>done / partial</span></div>
+      <div class="metric"><strong>{len(computers)}</strong><span>computers</span></div>
+      <div class="metric metric-status"><strong>{completed}/{partial}</strong><span>done / partial</span></div>
     </section>
-    <section class="controls" aria-labelledby="project-picker-label">
+    <section class="controls" aria-labelledby="view-picker-label">
       <div><span class="control-kicker">Focus the digest</span>
-        <label id="project-picker-label" for="project-picker">Choose a project</label>
-        <p>Showing <strong id="current-view-label">All projects overview</strong></p>
+        <label id="view-picker-label" for="view-picker">Choose a view</label>
+        <p>Showing <strong id="current-view-label">All work overview</strong></p>
       </div>
-      <select id="project-picker"{disabled_selector}>
-        <option value="overview">All projects overview</option>
-        {"".join(picker_options)}
+      <select id="view-picker"{disabled_selector}>
+        <option value="overview">All work overview</option>
+        {"".join(picker_groups)}
       </select>
     </section>
     <section class="digest-view" id="overview" data-digest-view>
@@ -510,7 +569,7 @@ def build_digest(
         <aside><section class="open"><h2>Still open</h2><ul>{overview_open_items}</ul></section></aside>
       </div>
     </section>
-    {"".join(project_views)}
+    {"".join(focus_views)}
     <footer>
       <span>Generated by Worklog · private, local, evidence-based</span>
       <span>{generated.strftime('%Y-%m-%d %H:%M %Z')}</span>
@@ -518,7 +577,7 @@ def build_digest(
   </main>
   <script>
     (() => {{
-      const picker = document.getElementById("project-picker");
+      const picker = document.getElementById("view-picker");
       const currentLabel = document.getElementById("current-view-label");
       const views = Array.from(document.querySelectorAll("[data-digest-view]"));
 
@@ -529,7 +588,7 @@ def build_digest(
         views.forEach((view) => {{ view.hidden = view !== selected; }});
         picker.value = selected.id;
         const option = picker.options[picker.selectedIndex];
-        currentLabel.textContent = option ? option.textContent : "All projects overview";
+        currentLabel.textContent = option ? option.textContent : "All work overview";
         if (moveFocus && selected.id !== "overview") {{
           const heading = selected.querySelector("h2");
           if (heading) heading.focus();
@@ -543,8 +602,8 @@ def build_digest(
       }}
 
       picker.addEventListener("change", () => showView(picker.value, true));
-      document.querySelectorAll("[data-select-project]").forEach((button) => {{
-        button.addEventListener("click", () => showView(button.dataset.selectProject, true));
+      document.querySelectorAll("[data-select-view]").forEach((button) => {{
+        button.addEventListener("click", () => showView(button.dataset.selectView, true));
       }});
       showView(location.hash.slice(1) || "overview", false);
     }})();

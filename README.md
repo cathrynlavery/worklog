@@ -6,7 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-141414)](https://www.python.org/)
 [![MIT license](https://img.shields.io/badge/license-MIT-f06a3c)](LICENSE)
 
-![A weekly Worklog digest based on Cathryn's real projects, showing checkpoints, contributors, and remaining work](docs/screenshots/digest.png)
+![A weekly Worklog digest based on Cathryn's real projects, with project, contributor, and computer views](docs/screenshots/digest.png)
 
 This is a curated, public-safe week from Cathryn's real Worklog, Diagram Design, and Little Might projects—not generic demo data. Private operations and internal evidence are excluded.
 
@@ -39,7 +39,7 @@ Worklog makes the checkpoint—not the conversation—the unit of progress.
 |---|---|
 | **Evidence-required checkpoints** | Every record needs a test, commit, URL, run ID, or artifact path. |
 | **One readable ledger per session** | Human-readable Markdown grouped by contributor and stable session ID. |
-| **Daily + weekly HTML digests** | Self-contained, responsive summaries with project navigation, timelines, and open work. |
+| **Daily + weekly HTML digests** | Self-contained, responsive summaries filterable by project, contributor, or computer. |
 | **Automatic nightly generation** | Native LaunchAgent support on macOS and cron support on Linux. |
 | **Private local storage** | Directories use `0700`; checkpoint, report, digest, and log files use `0600`. |
 
@@ -220,7 +220,7 @@ Files land in:
 
 Use `--date YYYY-MM-DD` to regenerate a historical day or its containing calendar week. Without `--write`, a single daily or weekly digest is printed to stdout.
 
-The HTML is responsive, printable, and self-contained. It opens on a compact overview, then lets you select one project to inspect its timeline and remaining work. Checkpoint text is escaped before rendering; the tiny inline selector loads no external assets and makes no network requests. Expand **Outcome & evidence** when you need the receipt.
+The HTML is responsive, printable, and self-contained. It opens on a compact project overview, then lets you focus the timeline and remaining work by project, contributor, or computer. Checkpoint text is escaped before rendering; the tiny inline selector loads no external assets and makes no network requests. Expand **Outcome & evidence** when you need the receipt.
 
 The presentation uses the same editorial design language as [Little Might](https://www.littlemight.com/): warm paper, serif-led hierarchy, restrained coral accents, and hairline project rows instead of dashboard cards.
 

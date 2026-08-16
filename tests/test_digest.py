@@ -33,7 +33,8 @@ class DigestTests(TempLedger):
         session.write_text(
             session.read_text(encoding="utf-8")
             .replace("Synthetic accomplishment.", "A real <strong>outcome</strong>.")
-            .replace("Synthetic evidence.", "https://example.com/proof"),
+            .replace("Synthetic evidence.", "https://example.com/proof")
+            .replace("test-machine", "studio <one> &"),
             encoding="utf-8",
         )
         since, until = digest_window("daily", day=dt.date(2026, 8, 16))
@@ -57,17 +58,24 @@ class DigestTests(TempLedger):
         self.assertIn('href="https://example.com/proof"', digest)
         self.assertIn("1</strong><span>checkpoints", digest)
         self.assertIn("Sunday, August 16, 2026", digest)
-        self.assertIn('id="project-picker"', digest)
+        self.assertIn('id="view-picker"', digest)
         self.assertIn('id="overview" data-digest-view', digest)
         self.assertIn('id="project-0" data-digest-view hidden', digest)
+        self.assertIn('id="contributor-0" data-digest-view hidden', digest)
+        self.assertIn('id="computer-0" data-digest-view hidden', digest)
+        self.assertIn('<optgroup label="Projects">', digest)
+        self.assertIn('<optgroup label="Contributors">', digest)
+        self.assertIn('<optgroup label="Computers">', digest)
+        self.assertIn("studio &lt;one&gt; &amp; (1)", digest)
         self.assertIn("--paper:#f5f4ed", digest)
         self.assertIn("--accent:#f7591f", digest)
         self.assertIn('--font-serif:"Instrument Serif"', digest)
         self.assertIn("Cathryn Lavery · local work ledger", digest)
         self.assertIn("What <em>actually got done.</em>", digest)
         self.assertIn("<span>contributors</span>", digest)
+        self.assertIn("<span>computers</span>", digest)
 
-    def test_project_selector_indexes_every_project_and_limits_overview_cards(self) -> None:
+    def test_view_selector_indexes_dimensions_and_limits_overview_cards(self) -> None:
         checkpoints = [
             (
                 f"2026-08-16T{23 - index:02d}:00:00Z",
@@ -84,11 +92,15 @@ class DigestTests(TempLedger):
         digest = build_digest(entries, period="daily", since=since, until=until)
 
         self.assertEqual(digest.count('<option value="project-'), 14)
+        self.assertEqual(digest.count('<option value="contributor-'), 1)
+        self.assertEqual(digest.count('<option value="computer-'), 1)
         self.assertEqual(digest.count('class="project-card"'), 12)
         self.assertEqual(digest.count('class="digest-view" id="project-'), 14)
+        self.assertEqual(digest.count('class="digest-view" id="contributor-'), 1)
+        self.assertEqual(digest.count('class="digest-view" id="computer-'), 1)
         self.assertIn("+2 more projects", digest)
-        self.assertIn('data-select-project="project-0"', digest)
-        self.assertIn('data-select-project="overview"', digest)
+        self.assertIn('data-select-view="project-0"', digest)
+        self.assertIn('data-select-view="overview"', digest)
 
     def test_weekly_window_starts_monday_and_ends_sunday(self) -> None:
         since, until = digest_window("weekly", day=dt.date(2026, 8, 16))

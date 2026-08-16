@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agent-worklog"
 version = "0.1.0"
-description = "A private, evidence-required work journal for coding agents."
+description = "A private, evidence-required work journal for people and coding agents."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
