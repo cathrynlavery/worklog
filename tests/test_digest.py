@@ -63,7 +63,9 @@ class DigestTests(TempLedger):
         self.assertIn("--paper:#f5f4ed", digest)
         self.assertIn("--accent:#f7591f", digest)
         self.assertIn('--font-serif:"Instrument Serif"', digest)
-        self.assertIn("Cathryn Lavery · local agent ledger", digest)
+        self.assertIn("Cathryn Lavery · local work ledger", digest)
+        self.assertIn("What <em>actually got done.</em>", digest)
+        self.assertIn("<span>contributors</span>", digest)
 
     def test_project_selector_indexes_every_project_and_limits_overview_cards(self) -> None:
         checkpoints = [

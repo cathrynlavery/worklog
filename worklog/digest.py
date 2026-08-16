@@ -477,12 +477,12 @@ def build_digest(
   <main class="shell">
     <header class="site-header">
       <span class="wordmark">Worklog</span>
-      <span class="colophon">Cathryn Lavery · local agent ledger</span>
+      <span class="colophon">Cathryn Lavery · local work ledger</span>
     </header>
     <section class="masthead">
       <div>
         <div class="eyebrow">{period_name} worklog</div>
-        <h1>What the agents <em>actually got done.</em></h1>
+        <h1>What <em>actually got done.</em></h1>
         <p class="date">{_safe(label)}</p>
       </div>
       <p class="hero-note"><strong>Evidence, not activity.</strong>
@@ -491,7 +491,7 @@ def build_digest(
     <section class="metrics" aria-label="Digest summary">
       <div class="metric"><strong>{len(selected)}</strong><span>checkpoints</span></div>
       <div class="metric"><strong>{len(projects)}</strong><span>projects</span></div>
-      <div class="metric"><strong>{len(agents)}</strong><span>agents</span></div>
+      <div class="metric"><strong>{len(agents)}</strong><span>contributors</span></div>
       <div class="metric"><strong>{completed}/{partial}</strong><span>done / partial</span></div>
     </section>
     <section class="controls" aria-labelledby="project-picker-label">

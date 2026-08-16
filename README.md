@@ -1,14 +1,16 @@
 # Worklog
 
-**Agent transcripts tell you everything they did. Worklog tells you what shipped.**
+**Worklog keeps one evidence-based record of what you and your agents actually got done.**
 
 [![CI](https://github.com/cathrynlavery/worklog/actions/workflows/ci.yml/badge.svg)](https://github.com/cathrynlavery/worklog/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-141414)](https://www.python.org/)
 [![MIT license](https://img.shields.io/badge/license-MIT-f06a3c)](LICENSE)
 
-![A daily Worklog digest showing agent checkpoints, projects, and remaining work](docs/screenshots/digest.png)
+![A weekly Worklog digest based on Cathryn's real projects, showing checkpoints, contributors, and remaining work](docs/screenshots/digest.png)
 
-Worklog is a private, evidence-required journal for Claude Code, Codex, and any other agent that can run a shell command. It records verified outcomes in plain Markdown, then turns them into daily and weekly reports you can actually scan.
+This is a curated, public-safe week from Cathryn's real Worklog, Diagram Design, and Little Might projects—not generic demo data. Private operations and internal evidence are excluded.
+
+Worklog is a private, evidence-required journal for you, Claude Code, Codex, and any other agent that can run a shell command. It records verified outcomes in plain Markdown, then turns them into daily and weekly reports you can actually scan.
 
 No cloud account. No telemetry. No database. No transcript dump.
 
@@ -23,11 +25,11 @@ Coding agents created the same problem at a different scale. They can work acros
 - What shipped?
 - What evidence proves it?
 - What is still open?
-- Which agent worked on which project?
+- Who worked on which project?
 
 Worklog makes the checkpoint—not the conversation—the unit of progress.
 
-> **A material task is not complete until the agent can name the outcome and the evidence.**
+> **A material task is not complete until the checkpoint names the outcome and the evidence.**
 
 ---
 
@@ -36,7 +38,7 @@ Worklog makes the checkpoint—not the conversation—the unit of progress.
 | | |
 |---|---|
 | **Evidence-required checkpoints** | Every record needs a test, commit, URL, run ID, or artifact path. |
-| **One readable ledger per session** | Human-readable Markdown grouped by agent and stable session ID. |
+| **One readable ledger per session** | Human-readable Markdown grouped by contributor and stable session ID. |
 | **Daily + weekly HTML digests** | Self-contained, responsive summaries with project navigation, timelines, and open work. |
 | **Automatic nightly generation** | Native LaunchAgent support on macOS and cron support on Linux. |
 | **Private local storage** | Directories use `0700`; checkpoint, report, digest, and log files use `0600`. |

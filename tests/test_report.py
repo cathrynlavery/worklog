@@ -37,7 +37,7 @@ class ReportTests(TempLedger):
 
         report = build_report(collect_entries(), since=since, until=until)
 
-        self.assertIn("3 checkpoints across 2 projects and 2 agents.", report)
+        self.assertIn("3 checkpoints across 2 projects and 2 contributors.", report)
         self.assertLess(report.index("## alpha"), report.index("## beta"))
         self.assertLess(report.index("Alpha newer"), report.index("Alpha older"))
 
@@ -82,7 +82,7 @@ class ReportTests(TempLedger):
         report = build_report([], since=since, until=since)
 
         self.assertTrue(report.startswith("# Worklog — 2026-08-13\n"))
-        self.assertIn("0 checkpoints across 0 projects and 0 agents.", report)
+        self.assertIn("0 checkpoints across 0 projects and 0 contributors.", report)
         self.assertIn("Nothing was recorded in this window.", report)
         self.assertIn("No remaining items were recorded.", report)
 

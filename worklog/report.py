@@ -123,7 +123,7 @@ def build_report(
     summary = (
         f"{_count_label(len(selected), 'checkpoint')} across "
         f"{_count_label(len(projects), 'project')} and "
-        f"{_count_label(len(agents), 'agent')}."
+        f"{_count_label(len(agents), 'contributor')}."
     )
     if not selected:
         summary += " Nothing was recorded in this window."

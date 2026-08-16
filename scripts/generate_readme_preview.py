@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the sanitized HTML digest used for README screenshots."""
+"""Generate a public-safe digest from real Cathryn projects for README screenshots."""
 
 from __future__ import annotations
 
@@ -16,64 +16,75 @@ from worklog.view import collect_entries, filter_entries
 
 
 CHECKPOINTS = {
+    "cathryn": [
+        (
+            "2026-08-16T20:15:00Z",
+            "Set the public-launch direction for Worklog",
+            "worklog",
+            "partial",
+            "Defined the project-first digest, Little Might visual language, and human-inclusive positioning.",
+            "Direction reviewed in the live local digest preview.",
+            "Review the final branch before publishing.",
+        ),
+    ],
     "codex": [
         (
-            "2026-08-16T17:42:00Z",
-            "Closed the inventory reservation race",
-            "checkout-api",
+            "2026-08-16T19:50:44Z",
+            "Aligned Worklog digests with Little Might branding",
+            "worklog",
             "completed",
-            "Made reservation writes idempotent under concurrent retries.",
-            "184 tests passed; commit 8c4a7f2",
-            "Watch production retry volume after Monday's deploy.",
+            "Applied the warm-paper palette, serif-led hierarchy, restrained coral accents, and editorial project rows.",
+            "Local commit 92dbcaf; 94 tests passed; desktop and mobile previews verified.",
+            None,
         ),
         (
-            "2026-08-16T15:18:00Z",
-            "Cut cold-start latency by 38%",
-            "checkout-api",
+            "2026-08-16T19:45:50Z",
+            "Redesigned Worklog HTML digests for project navigation",
+            "worklog",
             "completed",
-            "Moved schema loading out of the request path and warmed the cache.",
-            "Benchmark: p95 812ms → 503ms across 500 cold starts",
+            "Added a bounded project overview, project picker, focused timelines, and project-specific open work.",
+            "Local commit da5aabd; real daily and weekly digests generated with private permissions.",
             None,
         ),
     ],
     "claude": [
         (
-            "2026-08-16T18:31:00Z",
-            "Shipped accessible checkout states",
-            "design-system",
-            "completed",
-            "Added keyboard, focus, error, and reduced-motion states to checkout.",
-            "axe: 0 violations; screenshots in artifacts/checkout-a11y",
-            "Verify VoiceOver flow on a physical iPhone.",
+            "2026-08-12T20:14:55Z",
+            "Figma export tooling slice shipped via codex-build (PR #39)",
+            "diagram-design",
+            "partial",
+            "Shipped the first Figma export tooling slice through the contributor workflow.",
+            "Public pull request #39 opened with current-head checks.",
+            "Merge after review comments are resolved and checks pass.",
         ),
         (
-            "2026-08-16T13:05:00Z",
-            "Published the v2 migration guide",
-            "design-system",
+            "2026-08-12T20:01:13Z",
+            "Fixed standalone SVG XML validity",
+            "diagram-design",
             "partial",
-            "Documented every breaking token rename with before/after examples.",
-            "docs/migration-v2.md; link check passed",
-            "Add the React Native example.",
+            "Preserved valid standalone SVG output across export paths.",
+            "Targeted SVG fixtures and XML parsing checks passed.",
+            "Complete the remaining export compatibility sweep.",
         ),
     ],
     "hermes": [
         (
-            "2026-08-16T19:04:00Z",
-            "Verified the release candidate on macOS and Linux",
-            "release-ops",
+            "2026-08-12T01:06:57Z",
+            "Improved LittleMight 1Password agent-access article and created short-form video packet",
+            "little-might",
             "completed",
-            "Ran install, upgrade, rollback, and clean-machine smoke tests.",
-            "CI run 31767359967; release checklist 14/14",
+            "Tightened the operator angle and turned the article into a short-form video packet.",
+            "Editorial revision and short-form packet completed in the Little Might workspace.",
             None,
         ),
         (
-            "2026-08-16T11:26:00Z",
-            "Added failed-payment alerting",
-            "release-ops",
-            "partial",
-            "Routed failed payment events into the on-call digest with deduplication.",
-            "Fixture replay: 12 events → 3 actionable alerts",
-            "Tune the retry threshold after one week of data.",
+            "2026-08-11T21:51:22Z",
+            "Drafted LittleMight post on 1Password access for AI agents",
+            "little-might",
+            "completed",
+            "Drafted a practical article on giving AI agents scoped credential access.",
+            "Draft completed in the Little Might editorial workspace.",
+            None,
         ),
     ],
 }
@@ -125,13 +136,13 @@ def main() -> None:
         for agent, checkpoints in CHECKPOINTS.items():
             write_fixture(ledger, agent, checkpoints)
         day = dt.date(2026, 8, 16)
-        since, until = digest_window("daily", day=day)
+        since, until = digest_window("weekly", day=day)
         entries = filter_entries(
             collect_entries(ledger), since=since, until=until
         )
         digest = build_digest(
             entries,
-            period="daily",
+            period="weekly",
             since=since,
             until=until,
             generated_at=dt.datetime(2026, 8, 16, 21, 5).astimezone(),
