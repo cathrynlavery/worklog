@@ -220,6 +220,8 @@ Use `--date YYYY-MM-DD` to regenerate a historical day or its containing calenda
 
 The HTML is responsive, printable, and self-contained. It opens on a compact overview, then lets you select one project to inspect its timeline and remaining work. Checkpoint text is escaped before rendering; the tiny inline selector loads no external assets and makes no network requests. Expand **Outcome & evidence** when you need the receipt.
 
+The presentation uses the same editorial design language as [Little Might](https://www.littlemight.com/): warm paper, serif-led hierarchy, restrained coral accents, and hairline project rows instead of dashboard cards.
+
 Install nightly digest generation:
 
 ```sh

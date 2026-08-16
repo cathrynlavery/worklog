@@ -6,120 +6,163 @@
   <meta name="color-scheme" content="light">
   <title>Daily Worklog — Sunday, August 16, 2026</title>
   <style>
-    :root { --ink:#141414; --paper:#f3f0e8; --card:#fffefa; --muted:#686b73;
-      --line:#d9d5ca; --accent:#f06a3c; --accent-soft:#ffe2d6; --good:#18794e; }
-    * { box-sizing:border-box; }
+    :root { --paper:#f5f4ed; --paper-2:#efeee5; --ink:#0b0d0b; --muted:#52534e;
+      --soft:#65655c; --rule:rgba(11,13,11,.12); --rule-soft:rgba(11,13,11,.06);
+      --accent:#f7591f; --accent-tint:rgba(247,89,31,.1); --good:#18794e;
+      --font-serif:"Instrument Serif","Times New Roman",serif;
+      --font-sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+      --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,monospace; }
+    *,*::before,*::after { box-sizing:border-box; }
+    html { color-scheme:light; }
     body { margin:0; color:var(--ink); background:var(--paper);
-      font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-    .shell { max-width:1040px; margin:0 auto; padding:48px 28px 72px; }
-    .masthead { background:var(--ink); color:white; border-radius:4px; padding:38px 42px;
-      position:relative; overflow:hidden; }
-    .masthead::after { content:""; position:absolute; width:220px; height:220px;
-      right:-80px; top:-120px; border:44px solid var(--accent); border-radius:50%; opacity:.9; }
-    .masthead > * { position:relative; z-index:1; }
-    .eyebrow { color:#ff9a76; font-size:12px; font-weight:800; letter-spacing:.16em;
-      text-transform:uppercase; }
-    h1 { max-width:720px; margin:12px 0 4px; font:700 42px/1.08 ui-serif,Georgia,serif;
-      letter-spacing:-.025em; }
-    .date { margin:0; color:#c8c8c8; font-size:16px; }
-    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; margin:20px 0 34px;
-      background:var(--line); border:1px solid var(--line); }
-    .metric { background:var(--card); padding:19px 20px; }
-    .metric strong { display:block; font:700 28px/1 ui-serif,Georgia,serif; }
-    .metric span { color:var(--muted); font-size:12px; text-transform:uppercase;
-      letter-spacing:.08em; }
+      font:15px/1.55 var(--font-sans); }
+    button,select { font:inherit; }
+    .shell { max-width:1120px; margin:0 auto; padding:28px 32px 72px; }
+    .site-header { display:flex; align-items:baseline; justify-content:space-between; gap:24px;
+      padding:0 0 18px; border-bottom:1px solid var(--rule); }
+    .wordmark { font:400 27px/1 var(--font-serif); letter-spacing:-.01em; }
+    .colophon,.eyebrow,.control-kicker,.section-kicker { font:500 10px/1.3 var(--font-mono);
+      letter-spacing:.16em; text-transform:uppercase; }
+    .colophon { color:var(--soft); }
+    .masthead { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(220px,.65fr);
+      align-items:end; gap:64px; padding:68px 0 62px; border-bottom:1px solid var(--rule); }
+    .eyebrow,.control-kicker,.section-kicker { color:var(--accent); }
+    h1 { max-width:780px; margin:15px 0 16px; font:400 clamp(3.2rem,6.2vw,5.3rem)/.96
+      var(--font-serif); letter-spacing:-.022em; }
+    h1 em { color:var(--accent); font-weight:400; }
+    .date { margin:0; color:var(--muted); font-size:17px; }
+    .hero-note { padding-left:20px; border-left:2px solid var(--accent); }
+    .hero-note strong { display:block; margin-bottom:6px; font:400 23px/1.1 var(--font-serif); }
+    .hero-note span { color:var(--muted); font-size:13px; }
+    .metrics { display:grid; grid-template-columns:repeat(4,1fr); margin:0 0 56px;
+      border-bottom:1px solid var(--rule); }
+    .metric { min-width:0; padding:24px 20px 27px; border-right:1px solid var(--rule); }
+    .metric:first-child { padding-left:0; }
+    .metric:last-child { border-right:0; }
+    .metric strong { display:block; font:400 34px/1 var(--font-serif); }
+    .metric span { display:block; margin-top:7px; color:var(--soft); font:500 10px/1.2 var(--font-mono);
+      letter-spacing:.14em; text-transform:uppercase; }
     .controls { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,420px);
-      align-items:end; gap:24px; padding:22px 24px; margin-bottom:24px; background:var(--card);
-      border:1px solid var(--line); }
-    .control-kicker,.section-kicker { display:block; margin-bottom:3px; color:var(--accent);
-      font-size:10px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
-    .controls label { display:block; font:700 20px/1.2 ui-serif,Georgia,serif; }
-    .controls p { margin:5px 0 0; color:var(--muted); font-size:12px; }
-    select { width:100%; min-height:46px; padding:10px 42px 10px 13px; color:var(--ink);
-      background:var(--paper); border:1px solid #aaa59a; border-radius:0;
-      font:600 14px/1.2 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+      align-items:end; gap:32px; padding:24px; margin-bottom:56px; background:var(--paper-2);
+      border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); }
+    .control-kicker,.section-kicker { display:block; margin-bottom:7px; }
+    .controls label { display:block; font:400 28px/1.05 var(--font-serif); letter-spacing:-.012em; }
+    .controls p { margin:7px 0 0; color:var(--muted); font-size:12px; }
+    select { width:100%; min-height:48px; padding:10px 42px 10px 14px; color:var(--ink);
+      background:var(--paper); border:1px solid rgba(11,13,11,.28); border-radius:6px; }
     select:focus-visible,.project-card:focus-visible,.back-button:focus-visible { outline:3px solid
-      var(--accent-soft); outline-offset:2px; }
+      var(--accent-tint); outline-offset:3px; }
     .digest-view[hidden] { display:none !important; }
     .overview-layout,.project-layout { display:grid;
-      grid-template-columns:minmax(0,2fr) minmax(250px,1fr); gap:28px; }
-    .overview-heading { display:flex; align-items:end; justify-content:space-between; gap:24px;
-      margin-bottom:15px; }
-    .overview-heading h2 { margin:0; font:700 24px/1.15 ui-serif,Georgia,serif; }
-    .overview-heading p { max-width:330px; margin:0; color:var(--muted); font-size:13px; }
-    .overview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-    .project-card { appearance:none; min-width:0; padding:18px; text-align:left; color:var(--ink);
-      background:var(--card); border:1px solid var(--line); border-top:3px solid var(--ink);
-      border-radius:0; cursor:pointer; font:inherit; transition:transform .12s ease,border-color .12s ease; }
-    .project-card:hover { transform:translateY(-2px); border-color:var(--accent); }
-    .project-card-top { display:flex; align-items:start; justify-content:space-between; gap:10px; }
-    .project-card-top strong { overflow-wrap:anywhere; font:700 17px/1.25 ui-serif,Georgia,serif; }
-    .project-card-top > span { color:var(--accent); font-size:20px; }
-    .project-count { display:block; margin:5px 0 13px; color:var(--muted); font-size:11px;
-      font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
-    .project-preview { display:block; min-height:43px; color:#3f4146; font-size:12px; }
+      grid-template-columns:minmax(0,1fr) minmax(250px,300px); gap:64px; }
+    .overview-heading { display:grid; grid-template-columns:minmax(0,1fr) minmax(220px,.8fr);
+      align-items:end; gap:32px; margin-bottom:24px; }
+    .overview-heading h2 { margin:0; font:400 34px/1.05 var(--font-serif); letter-spacing:-.014em; }
+    .overview-heading p { margin:0; color:var(--muted); font-size:13px; }
+    .overview-grid { border-top:1px solid var(--rule); }
+    .project-card { appearance:none; display:grid; grid-template-columns:minmax(140px,.7fr)
+      minmax(0,1.3fr) auto; grid-template-areas:"top preview link" "count preview link";
+      width:100%; min-width:0; padding:23px 0; text-align:left; color:var(--ink);
+      background:transparent; border:0; border-bottom:1px solid var(--rule); border-radius:0;
+      cursor:pointer; transition:color .15s ease; }
+    .project-card:hover { color:var(--accent); }
+    .project-card-top { grid-area:top; display:block; min-width:0; padding-right:20px; }
+    .project-card-top strong { display:block; overflow:hidden; text-overflow:ellipsis;
+      white-space:nowrap; font:400 24px/1.08 var(--font-serif); letter-spacing:-.008em; }
+    .project-card-top > span { display:none; }
+    .project-count { grid-area:count; display:block; margin-top:7px; color:var(--soft);
+      font:500 9px/1.2 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; }
+    .project-preview { grid-area:preview; align-self:center; display:block; min-width:0;
+      padding-right:24px; color:var(--muted); font-size:12px; }
     .project-preview span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .project-preview span + span { margin-top:3px; color:var(--muted); }
-    .project-link { display:block; margin-top:14px; color:#b8431d; font-size:11px; font-weight:800;
-      letter-spacing:.06em; text-transform:uppercase; }
-    .overview-more { margin:14px 0 0; padding:12px 14px; color:var(--muted);
-      background:#e9e5dc; font-size:12px; }
-    .back-button { appearance:none; margin:0 0 14px; padding:0; color:#9b3819; background:none;
-      border:0; cursor:pointer; font:800 12px/1.3 ui-sans-serif,-apple-system,BlinkMacSystemFont,
-      "Segoe UI",sans-serif; letter-spacing:.04em; text-transform:uppercase; }
-    .project-detail { background:var(--card); border:1px solid var(--line); }
-    .project-heading { display:flex; align-items:baseline; justify-content:space-between;
-      padding:19px 22px; border-bottom:1px solid var(--line); }
-    .project-heading h2 { margin:0; font:700 20px/1.2 ui-serif,Georgia,serif; }
+    .project-preview span + span { margin-top:4px; color:var(--soft); }
+    .project-link { grid-area:link; align-self:center; color:var(--soft); font:500 10px/1.2 var(--font-mono);
+      letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; }
+    .project-link::after { content:" →"; color:var(--accent); }
+    .overview-more { margin:18px 0 0; color:var(--muted); font-size:12px; }
+    .back-button { appearance:none; margin:0 0 20px; padding:0; color:var(--ink); background:none;
+      border:0; cursor:pointer; font:500 10px/1.3 var(--font-mono); letter-spacing:.13em;
+      text-transform:uppercase; transition:color .15s ease; }
+    .back-button:hover { color:var(--accent); }
+    .project-detail { border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); }
+    .project-heading { display:flex; align-items:baseline; justify-content:space-between; gap:24px;
+      padding:24px 0; border-bottom:1px solid var(--rule); }
+    .project-heading h2 { margin:0; font:400 40px/1 var(--font-serif); letter-spacing:-.015em; }
     .project-heading h2:focus { outline:none; }
-    .project-heading span { color:var(--muted); font-size:12px; }
-    .checkpoint { display:grid; grid-template-columns:58px 1fr; padding:20px 22px 21px 0;
-      border-bottom:1px solid #ebe8e0; }
+    .project-heading span { color:var(--soft); font:500 10px/1.2 var(--font-mono);
+      letter-spacing:.12em; text-transform:uppercase; }
+    .checkpoint { display:grid; grid-template-columns:96px 1fr; padding:27px 0;
+      border-bottom:1px solid var(--rule); }
     .checkpoint:last-child { border-bottom:0; }
-    .checkpoint-rail { display:flex; flex-direction:column; align-items:center; gap:7px;
-      color:var(--muted); font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace; }
-    .dot { width:10px; height:10px; border-radius:50%; background:var(--accent); }
+    .checkpoint-rail { display:flex; align-items:center; align-self:start; gap:9px; color:var(--soft);
+      font:500 10px/1 var(--font-mono); letter-spacing:.08em; }
+    .dot { width:7px; height:7px; border-radius:50%; background:var(--accent); }
     .dot.complete { background:var(--good); }
-    .checkpoint-meta { display:flex; gap:8px; margin-bottom:6px; }
-    .checkpoint-meta span { padding:2px 7px; background:#efede6; color:var(--muted);
-      font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-    .checkpoint h3 { margin:0; font-size:16px; line-height:1.35; }
-    details { margin-top:12px; color:var(--muted); font-size:13px; }
-    summary { cursor:pointer; color:var(--ink); font-weight:700; }
-    details ul { margin:7px 0 10px; padding-left:20px; }
-    .detail-label { margin-top:9px; color:var(--muted); font-size:10px; font-weight:800;
-      letter-spacing:.08em; text-transform:uppercase; }
-    a { color:#b8431d; text-underline-offset:2px; }
-    aside { align-self:start; position:sticky; top:20px; }
-    .open { background:var(--ink); color:white; padding:24px; }
-    .open h2 { margin:0 0 15px; font:700 20px/1.2 ui-serif,Georgia,serif; }
+    .checkpoint-meta { display:flex; gap:9px; margin-bottom:7px; color:var(--soft);
+      font:500 9px/1.2 var(--font-mono); letter-spacing:.12em; text-transform:uppercase; }
+    .checkpoint-meta span + span::before { content:"·"; margin-right:9px; color:var(--rule); }
+    .checkpoint h3 { margin:0; font:400 24px/1.15 var(--font-serif); letter-spacing:-.006em; }
+    details { margin-top:13px; color:var(--muted); font-size:13px; }
+    summary { cursor:pointer; color:var(--ink); font-weight:500; text-decoration:underline;
+      text-decoration-color:var(--rule); text-underline-offset:4px; }
+    details ul { margin:8px 0 11px; padding-left:20px; }
+    .detail-label { margin-top:11px; color:var(--soft); font:500 9px/1.2 var(--font-mono);
+      letter-spacing:.14em; text-transform:uppercase; }
+    a { color:var(--ink); text-underline-offset:4px; }
+    a:hover { color:var(--accent); }
+    aside { align-self:start; position:sticky; top:24px; }
+    .open { padding-top:20px; border-top:2px solid var(--accent); }
+    .open h2 { margin:0 0 15px; font:400 27px/1.05 var(--font-serif); }
     .open ul { margin:0; padding:0; list-style:none; }
-    .open li { padding:12px 0; border-top:1px solid #3a3a3a; }
-    .open li:first-child { border-top:0; }
-    .open small { display:block; margin-top:3px; color:#ff9a76; }
-    .open .empty,.open .more-open { color:#b9b9b9; }
-    .empty-state { border:1px dashed var(--line); background:var(--card); padding:46px;
+    .open li { padding:14px 0; border-top:1px solid var(--rule); }
+    .open li span { display:block; }
+    .open small { display:block; margin-top:4px; color:var(--accent); font:500 9px/1.2 var(--font-mono);
+      letter-spacing:.1em; text-transform:uppercase; }
+    .open .empty,.open .more-open { color:var(--soft); }
+    .empty-state { padding:46px 0; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
       text-align:center; color:var(--muted); }
-    footer { margin-top:34px; padding-top:17px; border-top:1px solid var(--line);
-      display:flex; justify-content:space-between; color:var(--muted); font-size:11px; }
-    @media (max-width:760px) { .shell{padding:20px 14px 46px} .masthead{padding:30px 24px}
-      .masthead::after{right:-132px;top:-112px} h1{font-size:32px}
-      .metrics{grid-template-columns:repeat(2,1fr)}
-      .controls{grid-template-columns:1fr;gap:14px} .overview-layout,.project-layout{grid-template-columns:1fr}
-      .overview-heading{display:block} .overview-heading p{margin-top:7px} .overview-grid{grid-template-columns:1fr}
-      aside{position:static} footer{display:block} footer span{display:block} footer span + span{margin-top:4px} }
+    footer { margin-top:72px; padding-top:22px; border-top:1px solid var(--rule);
+      display:flex; justify-content:space-between; gap:24px; color:var(--soft);
+      font:500 9px/1.4 var(--font-mono); letter-spacing:.08em; text-transform:uppercase; }
+    @media (max-width:760px) {
+      .shell{padding:20px 18px 46px} .colophon{display:none}
+      .masthead{grid-template-columns:1fr;gap:34px;padding:48px 0 42px}
+      h1{font-size:clamp(3rem,15vw,4.35rem)} .hero-note{max-width:280px}
+      .metrics{grid-template-columns:repeat(2,1fr);margin-bottom:44px}
+      .metric{padding:20px 12px 22px} .metric:first-child{padding-left:0}
+      .metric:nth-child(2){border-right:0} .metric:nth-child(3){padding-left:0}
+      .controls{grid-template-columns:1fr;gap:18px;padding:22px 18px;margin-bottom:44px}
+      .overview-layout,.project-layout{grid-template-columns:1fr;gap:42px}
+      .overview-heading{grid-template-columns:1fr;gap:10px}
+      .project-card{grid-template-columns:minmax(0,1fr) auto;
+        grid-template-areas:"top link" "count count" "preview preview";gap:0}
+      .project-preview{padding:15px 0 0} .project-link{font-size:0}
+      .project-link::after{content:"→";font-size:16px}
+      .project-heading h2{font-size:34px}
+      .checkpoint{grid-template-columns:1fr;gap:13px}
+      aside{position:static} footer{display:block} footer span{display:block}
+      footer span + span{margin-top:5px}
+    }
+    @media (prefers-reduced-motion:reduce) { *{scroll-behavior:auto!important;transition:none!important} }
     @media print { body{background:white} .shell{max-width:none;padding:0}
-      .masthead{break-inside:avoid} .controls,.back-button{display:none} aside{position:static}
-      details{display:none} }
+      .site-header,.controls,.back-button{display:none} aside{position:static} details{display:none} }
   </style>
 </head>
 <body>
   <main class="shell">
-    <header class="masthead">
-      <div class="eyebrow">Daily worklog</div>
-      <h1>What the agents actually got done.</h1>
-      <p class="date">Sunday, August 16, 2026</p>
+    <header class="site-header">
+      <span class="wordmark">Worklog</span>
+      <span class="colophon">Cathryn Lavery · local agent ledger</span>
     </header>
+    <section class="masthead">
+      <div>
+        <div class="eyebrow">Daily worklog</div>
+        <h1>What the agents <em>actually got done.</em></h1>
+        <p class="date">Sunday, August 16, 2026</p>
+      </div>
+      <p class="hero-note"><strong>Evidence, not activity.</strong>
+        <span>A private record of completed work, proof, and what remains.</span></p>
+    </section>
     <section class="metrics" aria-label="Digest summary">
       <div class="metric"><strong>6</strong><span>checkpoints</span></div>
       <div class="metric"><strong>3</strong><span>projects</span></div>
@@ -138,7 +181,7 @@
     </section>
     <section class="digest-view" id="overview" data-digest-view>
       <div class="overview-layout">
-        <div><div class="overview-heading"><div><span class="section-kicker">Overview</span><h2>Choose what you want to inspect.</h2></div><p>Recent outcomes stay visible. Full timelines appear only when you select a project.</p></div><div class="overview-grid"><button class="project-card" type="button" data-select-project="project-0"><span class="project-card-top"><strong>release-ops</strong><span aria-hidden="true">→</span></span><span class="project-count">2 checkpoints · 1 open</span><span class="project-preview"><span>Verified the release candidate on macOS and Linux</span><span>Added failed-payment alerting</span></span><span class="project-link">View project</span></button><button class="project-card" type="button" data-select-project="project-1"><span class="project-card-top"><strong>design-system</strong><span aria-hidden="true">→</span></span><span class="project-count">2 checkpoints · 2 open</span><span class="project-preview"><span>Shipped accessible checkout states</span><span>Published the v2 migration guide</span></span><span class="project-link">View project</span></button><button class="project-card" type="button" data-select-project="project-2"><span class="project-card-top"><strong>checkout-api</strong><span aria-hidden="true">→</span></span><span class="project-count">2 checkpoints · 1 open</span><span class="project-preview"><span>Closed the inventory reservation race</span><span>Cut cold-start latency by 38%</span></span><span class="project-link">View project</span></button></div></div>
+        <div><div class="overview-heading"><div><span class="section-kicker">Overview</span><h2>Choose a project.</h2></div><p>Scan the latest outcomes here, then open one project for its full timeline and remaining work.</p></div><div class="overview-grid"><button class="project-card" type="button" data-select-project="project-0"><span class="project-card-top"><strong>release-ops</strong><span aria-hidden="true">→</span></span><span class="project-count">2 checkpoints · 1 open</span><span class="project-preview"><span>Verified the release candidate on macOS and Linux</span><span>Added failed-payment alerting</span></span><span class="project-link">View project</span></button><button class="project-card" type="button" data-select-project="project-1"><span class="project-card-top"><strong>design-system</strong><span aria-hidden="true">→</span></span><span class="project-count">2 checkpoints · 2 open</span><span class="project-preview"><span>Shipped accessible checkout states</span><span>Published the v2 migration guide</span></span><span class="project-link">View project</span></button><button class="project-card" type="button" data-select-project="project-2"><span class="project-card-top"><strong>checkout-api</strong><span aria-hidden="true">→</span></span><span class="project-count">2 checkpoints · 1 open</span><span class="project-preview"><span>Closed the inventory reservation race</span><span>Cut cold-start latency by 38%</span></span><span class="project-link">View project</span></button></div></div>
         <aside><section class="open"><h2>Still open</h2><ul><li><span>Verify VoiceOver flow on a physical iPhone.</span><small>design-system</small></li><li><span>Watch production retry volume after Monday&#x27;s deploy.</span><small>checkout-api</small></li><li><span>Add the React Native example.</span><small>design-system</small></li><li><span>Tune the retry threshold after one week of data.</span><small>release-ops</small></li></ul></section></aside>
       </div>
     </section>

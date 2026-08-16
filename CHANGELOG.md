@@ -10,6 +10,7 @@ All notable changes to Worklog are documented here.
 - Claude Code, Codex, and generic-agent adapters.
 - Private Markdown daily reports and scheduled report generation on macOS and Linux.
 - Self-contained daily and weekly HTML digests with a compact project overview, project selector, focused timelines, agent/status labels, expandable evidence, and open-item rollups.
+- Little Might-aligned digest styling with a warm-paper palette, serif-led hierarchy, restrained coral accents, and editorial hairline rows.
 - Nightly HTML digest scheduling with `worklog install-digests`.
 - Ledger import with idempotent conflict-aware merge mode.
 - Installation diagnostics, permissions checks, redaction, and cutover verification.
