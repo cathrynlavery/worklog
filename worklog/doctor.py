@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from .hook import build_response
 from .paths import ledger_root
 from .view import collect_entries, parse_session_file
 
@@ -419,17 +420,31 @@ def _check_unparsable_files() -> Check:
     )
 
 
-def _contains_worklog(value: object) -> bool:
+def _contains_worklog_hook(value: object) -> bool:
     if isinstance(value, str):
-        return "worklog" in value.casefold()
+        return "worklog.hook" in value.casefold()
     if isinstance(value, dict):
         return any(
-            _contains_worklog(key) or _contains_worklog(item)
+            _contains_worklog_hook(key) or _contains_worklog_hook(item)
             for key, item in value.items()
         )
     if isinstance(value, list):
-        return any(_contains_worklog(item) for item in value)
+        return any(_contains_worklog_hook(item) for item in value)
     return False
+
+
+def _valid_user_prompt_response(response: object) -> bool:
+    if not isinstance(response, dict):
+        return False
+    output = response.get("hookSpecificOutput")
+    if not isinstance(output, dict):
+        return False
+    context = output.get("additionalContext")
+    return (
+        output.get("hookEventName") == "UserPromptSubmit"
+        and isinstance(context, str)
+        and "worklog add" in context.casefold()
+    )
 
 
 def _check_claude_hook() -> Check:
@@ -476,16 +491,30 @@ def _check_claude_hook() -> Check:
         hooks = configuration.get("hooks")
         if isinstance(hooks, dict):
             user_prompt_hooks = hooks.get("UserPromptSubmit")
-    if _contains_worklog(user_prompt_hooks):
+    if _contains_worklog_hook(user_prompt_hooks):
+        response = build_response("worklog-doctor")
+        if _valid_user_prompt_response(response):
+            return Check(
+                name="claude code hook",
+                status="ok",
+                message=(
+                    "A worklog UserPromptSubmit hook is registered and emits "
+                    "valid Claude Code context."
+                ),
+            )
         return Check(
             name="claude code hook",
-            status="ok",
-            message="A UserPromptSubmit hook referencing worklog is registered.",
+            status="warn",
+            message=(
+                "The worklog UserPromptSubmit hook is registered, but its "
+                "response does not match the Claude Code hook protocol."
+            ),
+            hint="Reinstall or update worklog, then rerun doctor.",
         )
     return Check(
         name="claude code hook",
         status="warn",
-        message="No UserPromptSubmit hook referencing worklog is registered.",
+        message="No worklog UserPromptSubmit hook is registered.",
         hint=install_hint,
     )
 

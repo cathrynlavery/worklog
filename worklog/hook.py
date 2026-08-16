@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sys
 from collections.abc import Sequence
+from typing import Any
 
 
 def _shell_quote(value: str) -> str:
@@ -28,6 +29,16 @@ def build_context(session_id: str) -> str:
     )
 
 
+def build_response(session_id: str) -> dict[str, Any]:
+    """Build a Claude Code UserPromptSubmit response."""
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": build_context(session_id),
+        }
+    }
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Read one hook payload and always return a usable JSON response."""
     del argv
@@ -41,7 +52,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     except Exception:
         pass
 
-    print(json.dumps({"additionalContext": build_context(session_id)}))
+    print(json.dumps(build_response(session_id)))
     return 0
 
 

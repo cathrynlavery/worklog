@@ -9,7 +9,7 @@ from pathlib import Path
 
 from .paths import ensure_private_dir, ledger_root
 from .record import safe_component
-from .view import parse_session_file
+from .view import CHECKPOINT, Entry, parse_session_file
 
 
 @dataclass
@@ -97,6 +97,65 @@ def _write_replacement(path: Path, content: bytes) -> None:
         raise
 
 
+def _entry_key(entry: Entry) -> tuple[str, str]:
+    return entry.timestamp, entry.title
+
+
+def _checkpoint_blocks(text: str, entries: list[Entry]) -> dict[tuple[str, str], str]:
+    matches = list(CHECKPOINT.finditer(text))
+    parsed_keys = {_entry_key(entry) for entry in entries}
+    blocks: dict[tuple[str, str], str] = {}
+    for index, match in enumerate(matches):
+        key = (match.group(1), match.group(2).strip())
+        if key not in parsed_keys:
+            continue
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        blocks[key] = text[match.start() : end]
+    return blocks
+
+
+def _merged_session_content(
+    source_path: Path,
+    destination: Path,
+    source_entries: list[Entry],
+) -> tuple[bytes | None, int]:
+    destination_entries = parse_session_file(destination)
+    if not destination_entries:
+        raise ValueError("existing destination yielded no checkpoints")
+    if source_entries[0].session_id != destination_entries[0].session_id:
+        raise ValueError("source and destination session IDs differ")
+
+    source_text = source_path.read_text(encoding="utf-8")
+    destination_text = destination.read_text(encoding="utf-8")
+    source_blocks = _checkpoint_blocks(source_text, source_entries)
+    destination_blocks = _checkpoint_blocks(destination_text, destination_entries)
+
+    for key in source_blocks.keys() & destination_blocks.keys():
+        if source_blocks[key].strip() != destination_blocks[key].strip():
+            raise ValueError(
+                "an existing checkpoint differs from the source "
+                f"({key[0]} — {key[1]})"
+            )
+
+    missing_keys = [
+        _entry_key(entry)
+        for entry in source_entries
+        if _entry_key(entry) not in destination_blocks
+    ]
+    if not missing_keys:
+        return None, 0
+
+    merged = destination_text
+    if not merged.endswith("\n"):
+        merged += "\n"
+    if not merged.endswith("\n\n"):
+        merged += "\n"
+    merged += "".join(source_blocks[key] for key in missing_keys)
+    if not merged.endswith("\n"):
+        merged += "\n"
+    return merged.encode("utf-8"), len(missing_keys)
+
+
 def import_ledger(
     source: Path,
     *,
@@ -105,8 +164,10 @@ def import_ledger(
     on_conflict: str = "skip",
 ) -> ImportResult:
     """Copy valid session files from an existing ledger into a worklog ledger."""
-    if on_conflict not in {"skip", "replace", "rename"}:
-        raise ValueError("on_conflict must be 'skip', 'replace', or 'rename'")
+    if on_conflict not in {"skip", "replace", "rename", "merge"}:
+        raise ValueError(
+            "on_conflict must be 'skip', 'replace', 'rename', or 'merge'"
+        )
 
     source_sessions = _source_sessions_dir(Path(source))
     destination_root = Path(dest if dest is not None else ledger_root()).expanduser()
@@ -147,7 +208,8 @@ def import_ledger(
         )
 
         destination = base_destination
-        if _is_occupied(destination, reserved):
+        occupied = _is_occupied(destination, reserved)
+        if occupied:
             if on_conflict == "skip":
                 skipped_existing += 1
                 continue
@@ -159,6 +221,30 @@ def import_ledger(
                 f"refusing to import {source_path}: destination escapes "
                 f"ledger root ({destination})"
             )
+            continue
+
+        if occupied and on_conflict == "merge":
+            try:
+                content, checkpoint_count = _merged_session_content(
+                    source_path,
+                    destination,
+                    entries,
+                )
+            except (OSError, UnicodeError, ValueError) as error:
+                errors.append(f"could not merge {source_path}: {error}")
+                continue
+            if content is None:
+                skipped_existing += 1
+                continue
+            if not dry_run:
+                try:
+                    _write_replacement(destination, content)
+                except OSError as error:
+                    errors.append(f"could not merge {source_path}: {error}")
+                    continue
+            reserved.add(destination)
+            imported_files += 1
+            imported_checkpoints += checkpoint_count
             continue
 
         if dry_run:

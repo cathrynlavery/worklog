@@ -106,6 +106,19 @@ exception.
 
 Run `worklog COMMAND --help` for each command's options.
 
+To finish a cutover after the legacy ledger may have received late writes,
+audit and merge it idempotently:
+
+```sh
+worklog import /path/to/legacy-ledger --dry-run --on-conflict merge
+worklog import /path/to/legacy-ledger --on-conflict merge
+```
+
+Merge mode preserves existing destination checkpoints, appends only missing
+source checkpoints, and stops on overlapping checkpoints whose contents
+differ. Repeat the dry run afterward; a complete cutover reports zero imported
+files and checkpoints.
+
 ## Adapters
 
 - [Claude Code](adapters/claude-code.md)

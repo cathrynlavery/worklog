@@ -102,7 +102,7 @@ class DoctorTests(TempLedger):
                 "valid without hook",
                 '{"marker": "' + marker + '", "hooks": {}}',
                 "warn",
-                "No UserPromptSubmit hook",
+                "No worklog UserPromptSubmit hook",
             ),
             (
                 "malformed",
@@ -116,10 +116,21 @@ class DoctorTests(TempLedger):
                     '{"marker": "'
                     + marker
                     + '", "hooks": {"UserPromptSubmit": '
-                    '[{"hooks": [{"command": "worklog add"}]}]}}'
+                    '[{"hooks": [{"command": "python3 -m worklog.hook"}]}]}}'
                 ),
                 "ok",
-                "referencing worklog is registered",
+                "emits valid Claude Code context",
+            ),
+            (
+                "worklog command is not a prompt hook",
+                (
+                    '{"marker": "'
+                    + marker
+                    + '", "hooks": {"UserPromptSubmit": '
+                    '[{"hooks": [{"command": "worklog add"}]}]}}'
+                ),
+                "warn",
+                "No worklog UserPromptSubmit hook",
             ),
         )
 
@@ -133,6 +144,24 @@ class DoctorTests(TempLedger):
                 self.assertEqual(hook_check.status, expected_status)
                 self.assertIn(expected_message, hook_check.message)
                 self.assert_marker_not_disclosed(checks, marker)
+
+    def test_claude_hook_protocol_failure_is_reported(self) -> None:
+        claude_directory = private_mkdir(self.home / ".claude")
+        settings = claude_directory / "settings.json"
+        settings.write_text(
+            '{"hooks": {"UserPromptSubmit": '
+            '[{"hooks": [{"command": "python3 -m worklog.hook"}]}]}}',
+            encoding="utf-8",
+        )
+
+        with mock.patch(
+            "worklog.doctor.build_response",
+            return_value={"additionalContext": "worklog add"},
+        ):
+            hook_check = self.named(run_checks(), "claude code hook")
+
+        self.assertEqual(hook_check.status, "warn")
+        self.assertIn("does not match", hook_check.message)
 
     def test_codex_adapter_contents_are_never_disclosed(self) -> None:
         marker = "SYNTHETIC-CODEX-CONTENT-MUST-NOT-LEAK"

@@ -68,7 +68,7 @@ def _build_parser() -> tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
     import_parser.add_argument("--dry-run", action="store_true")
     import_parser.add_argument(
         "--on-conflict",
-        choices=("skip", "replace", "rename"),
+        choices=("skip", "replace", "rename", "merge"),
         default="skip",
     )
     doctor_parser = subparsers.add_parser(

@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from worklog.importer import import_ledger
+from worklog.view import parse_session_file
 
 from tests.support import TempLedger, permission_mode, private_mkdir, write_session
 
@@ -155,6 +156,100 @@ class ImporterTests(TempLedger):
         self.assertEqual(result.imported_files, 1)
         self.assertNotEqual(destination_file.read_bytes(), original_bytes)
         self.assertEqual(destination_file.read_bytes(), source_file.read_bytes())
+
+    def test_merge_conflict_appends_only_missing_checkpoints(self) -> None:
+        source = self.sandbox / "merge-source"
+        source_file = write_session(
+            source,
+            "codex",
+            "same",
+            [("2026-03-01T10:00:00Z", "Original", "alpha", "completed")],
+        )
+        destination = self.sandbox / "merge-destination"
+        import_ledger(source, dest=destination)
+        destination_file = destination / "sessions" / "codex" / "same.md"
+        original_bytes = destination_file.read_bytes()
+        write_session(
+            source,
+            "codex",
+            "same",
+            [
+                ("2026-03-01T10:00:00Z", "Original", "alpha", "completed"),
+                ("2026-03-02T10:00:00Z", "Added", "alpha", "partial"),
+            ],
+        )
+
+        result = import_ledger(source, dest=destination, on_conflict="merge")
+
+        self.assertEqual(result.imported_files, 1)
+        self.assertEqual(result.imported_checkpoints, 1)
+        self.assertEqual(result.errors, [])
+        self.assertTrue(destination_file.read_bytes().startswith(original_bytes))
+        self.assertEqual(len(parse_session_file(destination_file)), 2)
+
+        second = import_ledger(source, dest=destination, on_conflict="merge")
+        self.assertEqual(second.imported_files, 0)
+        self.assertEqual(second.imported_checkpoints, 0)
+        self.assertEqual(second.skipped_existing, 1)
+
+    def test_merge_dry_run_reports_missing_checkpoints_without_writing(self) -> None:
+        source = self.sandbox / "merge-dry-run-source"
+        write_session(
+            source,
+            "codex",
+            "same",
+            [("2026-03-01T10:00:00Z", "Original", "alpha", "completed")],
+        )
+        destination = self.sandbox / "merge-dry-run-destination"
+        import_ledger(source, dest=destination)
+        destination_file = destination / "sessions" / "codex" / "same.md"
+        original_bytes = destination_file.read_bytes()
+        write_session(
+            source,
+            "codex",
+            "same",
+            [
+                ("2026-03-01T10:00:00Z", "Original", "alpha", "completed"),
+                ("2026-03-02T10:00:00Z", "Added", "alpha", "partial"),
+            ],
+        )
+
+        result = import_ledger(
+            source,
+            dest=destination,
+            dry_run=True,
+            on_conflict="merge",
+        )
+
+        self.assertEqual(result.imported_files, 1)
+        self.assertEqual(result.imported_checkpoints, 1)
+        self.assertEqual(destination_file.read_bytes(), original_bytes)
+
+    def test_merge_stops_when_an_existing_checkpoint_differs(self) -> None:
+        source = self.sandbox / "merge-conflict-source"
+        write_session(
+            source,
+            "codex",
+            "same",
+            [("2026-03-01T10:00:00Z", "Original", "alpha", "completed")],
+        )
+        destination = self.sandbox / "merge-conflict-destination"
+        import_ledger(source, dest=destination)
+        destination_file = destination / "sessions" / "codex" / "same.md"
+        changed = destination_file.read_text(encoding="utf-8").replace(
+            "Synthetic evidence.",
+            "Different destination evidence.",
+        )
+        destination_file.write_text(changed, encoding="utf-8")
+        before = destination_file.read_bytes()
+
+        result = import_ledger(source, dest=destination, on_conflict="merge")
+
+        self.assertEqual(result.imported_files, 0)
+        self.assertEqual(result.imported_checkpoints, 0)
+        self.assertEqual(len(result.errors), 1)
+        self.assertIn("existing checkpoint differs", result.errors[0])
+        self.assertEqual(destination_file.read_bytes(), before)
 
     def test_source_may_be_ledger_root_or_sessions_directory(self) -> None:
         source = self.synthetic_source()
