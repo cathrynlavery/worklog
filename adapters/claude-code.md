@@ -1,7 +1,6 @@
 # Claude Code adapter
 
-Replace `/absolute/path/to/worklog` with this checkout's absolute path, then
-merge this block into `~/.claude/settings.json`:
+Merge this block into `~/.claude/settings.json` after installing Worklog:
 
 ```json
 {
@@ -11,7 +10,7 @@ merge this block into `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "PYTHONPATH='/absolute/path/to/worklog' python3 -m worklog.hook"
+            "command": "worklog hook"
           }
         ]
       }
@@ -38,3 +37,7 @@ Check the integration without disclosing the settings file:
 ```sh
 worklog doctor
 ```
+
+The hook only supplies context. It does not write to the ledger or capture the
+prompt. Claude records a checkpoint later, after material work has been
+verified.

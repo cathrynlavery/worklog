@@ -1,0 +1,34 @@
+name: Bug report
+description: Report a reproducible Worklog problem without sharing private ledger data.
+title: "bug: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not attach a real ledger, credential file, raw transcript, PHI, or secret.
+  - type: input
+    id: version
+    attributes:
+      label: Worklog version
+      placeholder: Output of worklog --version
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: macOS 15 / Python 3.13 / Claude Code
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+      description: Include a minimal synthetic reproduction and the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics
+      description: Paste relevant worklog doctor output after reviewing it for private data.

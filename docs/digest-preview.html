@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Daily Worklog — Sunday, August 16, 2026</title>
+  <style>
+    :root { --ink:#141414; --paper:#f3f0e8; --card:#fffefa; --muted:#686b73;
+      --line:#d9d5ca; --accent:#f06a3c; --accent-soft:#ffe2d6; --good:#18794e; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--paper);
+      font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    .shell { max-width:1040px; margin:0 auto; padding:48px 28px 72px; }
+    .masthead { background:var(--ink); color:white; border-radius:4px; padding:38px 42px;
+      position:relative; overflow:hidden; }
+    .masthead::after { content:""; position:absolute; width:220px; height:220px;
+      right:-80px; top:-120px; border:44px solid var(--accent); border-radius:50%; opacity:.9; }
+    .eyebrow { color:#ff9a76; font-size:12px; font-weight:800; letter-spacing:.16em;
+      text-transform:uppercase; }
+    h1 { max-width:720px; margin:12px 0 4px; font:700 42px/1.08 ui-serif,Georgia,serif;
+      letter-spacing:-.025em; }
+    .date { margin:0; color:#c8c8c8; font-size:16px; }
+    .metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; margin:20px 0 34px;
+      background:var(--line); border:1px solid var(--line); }
+    .metric { background:var(--card); padding:19px 20px; }
+    .metric strong { display:block; font:700 28px/1 ui-serif,Georgia,serif; }
+    .metric span { color:var(--muted); font-size:12px; text-transform:uppercase;
+      letter-spacing:.08em; }
+    .layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(250px,1fr); gap:28px; }
+    .project { background:var(--card); border:1px solid var(--line); margin-bottom:20px; }
+    .project-heading { display:flex; align-items:baseline; justify-content:space-between;
+      padding:19px 22px; border-bottom:1px solid var(--line); }
+    .project-heading h2 { margin:0; font:700 20px/1.2 ui-serif,Georgia,serif; }
+    .project-heading span { color:var(--muted); font-size:12px; }
+    .checkpoint { display:grid; grid-template-columns:58px 1fr; padding:20px 22px 21px 0;
+      border-bottom:1px solid #ebe8e0; }
+    .checkpoint:last-child { border-bottom:0; }
+    .checkpoint-rail { display:flex; flex-direction:column; align-items:center; gap:7px;
+      color:var(--muted); font:11px/1 ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .dot { width:10px; height:10px; border-radius:50%; background:var(--accent); }
+    .dot.complete { background:var(--good); }
+    .checkpoint-meta { display:flex; gap:8px; margin-bottom:6px; }
+    .checkpoint-meta span { padding:2px 7px; background:#efede6; color:var(--muted);
+      font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+    .checkpoint h3 { margin:0; font-size:16px; line-height:1.35; }
+    details { margin-top:12px; color:var(--muted); font-size:13px; }
+    summary { cursor:pointer; color:var(--ink); font-weight:700; }
+    details ul { margin:7px 0 10px; padding-left:20px; }
+    .detail-label { margin-top:9px; color:var(--muted); font-size:10px; font-weight:800;
+      letter-spacing:.08em; text-transform:uppercase; }
+    a { color:#b8431d; text-underline-offset:2px; }
+    aside { align-self:start; position:sticky; top:20px; }
+    .open { background:var(--ink); color:white; padding:24px; }
+    .open h2 { margin:0 0 15px; font:700 20px/1.2 ui-serif,Georgia,serif; }
+    .open ul { margin:0; padding:0; list-style:none; }
+    .open li { padding:12px 0; border-top:1px solid #3a3a3a; }
+    .open li:first-child { border-top:0; }
+    .open small { display:block; margin-top:3px; color:#ff9a76; }
+    .open .empty { color:#b9b9b9; }
+    .empty-state { border:1px dashed var(--line); background:var(--card); padding:46px;
+      text-align:center; color:var(--muted); }
+    footer { margin-top:34px; padding-top:17px; border-top:1px solid var(--line);
+      display:flex; justify-content:space-between; color:var(--muted); font-size:11px; }
+    @media (max-width:760px) { .shell{padding:20px 14px 46px} .masthead{padding:30px 24px}
+      h1{font-size:32px} .metrics{grid-template-columns:repeat(2,1fr)}
+      .layout{grid-template-columns:1fr} aside{position:static} footer{display:block} }
+    @media print { body{background:white} .shell{max-width:none;padding:0}
+      .masthead{break-inside:avoid} aside{position:static} details{display:none} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div class="eyebrow">Daily worklog</div>
+      <h1>What the agents actually got done.</h1>
+      <p class="date">Sunday, August 16, 2026</p>
+    </header>
+    <section class="metrics" aria-label="Digest summary">
+      <div class="metric"><strong>6</strong><span>checkpoints</span></div>
+      <div class="metric"><strong>3</strong><span>projects</span></div>
+      <div class="metric"><strong>3</strong><span>agents</span></div>
+      <div class="metric"><strong>4/2</strong><span>done / partial</span></div>
+    </section>
+    <div class="layout">
+      <div><section class="project"><div class="project-heading"><h2>release-ops</h2><span>2 checkpoints</span></div><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>12:04</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>hermes</span><span>completed</span></div><h3>Verified the release candidate on macOS and Linux</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Ran install, upgrade, rollback, and clean-machine smoke tests.</li></ul><div class="detail-label">Evidence</div><ul><li>CI run 31767359967; release checklist 14/14</li></ul></details></div></article><article class="checkpoint"><div class="checkpoint-rail"><span class="dot partial"></span><time>04:26</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>hermes</span><span>partial</span></div><h3>Added failed-payment alerting</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Routed failed payment events into the on-call digest with deduplication.</li></ul><div class="detail-label">Evidence</div><ul><li>Fixture replay: 12 events → 3 actionable alerts</li></ul></details></div></article></section><section class="project"><div class="project-heading"><h2>design-system</h2><span>2 checkpoints</span></div><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>11:31</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>claude</span><span>completed</span></div><h3>Shipped accessible checkout states</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Added keyboard, focus, error, and reduced-motion states to checkout.</li></ul><div class="detail-label">Evidence</div><ul><li>axe: 0 violations; screenshots in artifacts/checkout-a11y</li></ul></details></div></article><article class="checkpoint"><div class="checkpoint-rail"><span class="dot partial"></span><time>06:05</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>claude</span><span>partial</span></div><h3>Published the v2 migration guide</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Documented every breaking token rename with before/after examples.</li></ul><div class="detail-label">Evidence</div><ul><li>docs/migration-v2.md; link check passed</li></ul></details></div></article></section><section class="project"><div class="project-heading"><h2>checkout-api</h2><span>2 checkpoints</span></div><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>10:42</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>codex</span><span>completed</span></div><h3>Closed the inventory reservation race</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Made reservation writes idempotent under concurrent retries.</li></ul><div class="detail-label">Evidence</div><ul><li>184 tests passed; commit 8c4a7f2</li></ul></details></div></article><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>08:18</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>codex</span><span>completed</span></div><h3>Cut cold-start latency by 38%</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Moved schema loading out of the request path and warmed the cache.</li></ul><div class="detail-label">Evidence</div><ul><li>Benchmark: p95 812ms → 503ms across 500 cold starts</li></ul></details></div></article></section></div>
+      <aside><section class="open"><h2>Still open</h2><ul><li><span>Verify VoiceOver flow on a physical iPhone.</span><small>design-system</small></li><li><span>Watch production retry volume after Monday&#x27;s deploy.</span><small>checkout-api</small></li><li><span>Add the React Native example.</span><small>design-system</small></li><li><span>Tune the retry threshold after one week of data.</span><small>release-ops</small></li></ul></section></aside>
+    </div>
+    <footer>
+      <span>Generated by Worklog · private, local, evidence-based</span>
+      <span>2026-08-16 21:05 PDT</span>
+    </footer>
+  </main>
+</body>
+</html>
