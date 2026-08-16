@@ -48,13 +48,41 @@ class DigestTests(TempLedger):
         )
 
         self.assertTrue(digest.startswith("<!doctype html>"))
-        self.assertNotIn("<script>", digest)
+        self.assertNotIn("<script>alert(1)</script>", digest)
+        self.assertIn("<script>", digest)
+        self.assertNotIn("<script src=", digest)
         self.assertIn("Ship &lt;script&gt;alert(1)&lt;/script&gt;", digest)
         self.assertIn("alpha &amp; beta", digest)
         self.assertIn("A real &lt;strong&gt;outcome&lt;/strong&gt;.", digest)
         self.assertIn('href="https://example.com/proof"', digest)
         self.assertIn("1</strong><span>checkpoints", digest)
         self.assertIn("Sunday, August 16, 2026", digest)
+        self.assertIn('id="project-picker"', digest)
+        self.assertIn('id="overview" data-digest-view', digest)
+        self.assertIn('id="project-0" data-digest-view hidden', digest)
+
+    def test_project_selector_indexes_every_project_and_limits_overview_cards(self) -> None:
+        checkpoints = [
+            (
+                f"2026-08-16T{23 - index:02d}:00:00Z",
+                f"Finished outcome {index}",
+                f"project-{index:02d}",
+                "completed",
+            )
+            for index in range(14)
+        ]
+        write_session(self.root, "codex", "many-projects", checkpoints)
+        since, until = digest_window("daily", day=dt.date(2026, 8, 16))
+        entries = filter_entries(collect_entries(), since=since, until=until)
+
+        digest = build_digest(entries, period="daily", since=since, until=until)
+
+        self.assertEqual(digest.count('<option value="project-'), 14)
+        self.assertEqual(digest.count('class="project-card"'), 12)
+        self.assertEqual(digest.count('class="digest-view" id="project-'), 14)
+        self.assertIn("+2 more projects", digest)
+        self.assertIn('data-select-project="project-0"', digest)
+        self.assertIn('data-select-project="overview"', digest)
 
     def test_weekly_window_starts_monday_and_ends_sunday(self) -> None:
         since, until = digest_window("weekly", day=dt.date(2026, 8, 16))

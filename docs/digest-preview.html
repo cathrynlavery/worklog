@@ -16,6 +16,7 @@
       position:relative; overflow:hidden; }
     .masthead::after { content:""; position:absolute; width:220px; height:220px;
       right:-80px; top:-120px; border:44px solid var(--accent); border-radius:50%; opacity:.9; }
+    .masthead > * { position:relative; z-index:1; }
     .eyebrow { color:#ff9a76; font-size:12px; font-weight:800; letter-spacing:.16em;
       text-transform:uppercase; }
     h1 { max-width:720px; margin:12px 0 4px; font:700 42px/1.08 ui-serif,Georgia,serif;
@@ -27,11 +28,50 @@
     .metric strong { display:block; font:700 28px/1 ui-serif,Georgia,serif; }
     .metric span { color:var(--muted); font-size:12px; text-transform:uppercase;
       letter-spacing:.08em; }
-    .layout { display:grid; grid-template-columns:minmax(0,2fr) minmax(250px,1fr); gap:28px; }
-    .project { background:var(--card); border:1px solid var(--line); margin-bottom:20px; }
+    .controls { display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,420px);
+      align-items:end; gap:24px; padding:22px 24px; margin-bottom:24px; background:var(--card);
+      border:1px solid var(--line); }
+    .control-kicker,.section-kicker { display:block; margin-bottom:3px; color:var(--accent);
+      font-size:10px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }
+    .controls label { display:block; font:700 20px/1.2 ui-serif,Georgia,serif; }
+    .controls p { margin:5px 0 0; color:var(--muted); font-size:12px; }
+    select { width:100%; min-height:46px; padding:10px 42px 10px 13px; color:var(--ink);
+      background:var(--paper); border:1px solid #aaa59a; border-radius:0;
+      font:600 14px/1.2 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    select:focus-visible,.project-card:focus-visible,.back-button:focus-visible { outline:3px solid
+      var(--accent-soft); outline-offset:2px; }
+    .digest-view[hidden] { display:none !important; }
+    .overview-layout,.project-layout { display:grid;
+      grid-template-columns:minmax(0,2fr) minmax(250px,1fr); gap:28px; }
+    .overview-heading { display:flex; align-items:end; justify-content:space-between; gap:24px;
+      margin-bottom:15px; }
+    .overview-heading h2 { margin:0; font:700 24px/1.15 ui-serif,Georgia,serif; }
+    .overview-heading p { max-width:330px; margin:0; color:var(--muted); font-size:13px; }
+    .overview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .project-card { appearance:none; min-width:0; padding:18px; text-align:left; color:var(--ink);
+      background:var(--card); border:1px solid var(--line); border-top:3px solid var(--ink);
+      border-radius:0; cursor:pointer; font:inherit; transition:transform .12s ease,border-color .12s ease; }
+    .project-card:hover { transform:translateY(-2px); border-color:var(--accent); }
+    .project-card-top { display:flex; align-items:start; justify-content:space-between; gap:10px; }
+    .project-card-top strong { overflow-wrap:anywhere; font:700 17px/1.25 ui-serif,Georgia,serif; }
+    .project-card-top > span { color:var(--accent); font-size:20px; }
+    .project-count { display:block; margin:5px 0 13px; color:var(--muted); font-size:11px;
+      font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+    .project-preview { display:block; min-height:43px; color:#3f4146; font-size:12px; }
+    .project-preview span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .project-preview span + span { margin-top:3px; color:var(--muted); }
+    .project-link { display:block; margin-top:14px; color:#b8431d; font-size:11px; font-weight:800;
+      letter-spacing:.06em; text-transform:uppercase; }
+    .overview-more { margin:14px 0 0; padding:12px 14px; color:var(--muted);
+      background:#e9e5dc; font-size:12px; }
+    .back-button { appearance:none; margin:0 0 14px; padding:0; color:#9b3819; background:none;
+      border:0; cursor:pointer; font:800 12px/1.3 ui-sans-serif,-apple-system,BlinkMacSystemFont,
+      "Segoe UI",sans-serif; letter-spacing:.04em; text-transform:uppercase; }
+    .project-detail { background:var(--card); border:1px solid var(--line); }
     .project-heading { display:flex; align-items:baseline; justify-content:space-between;
       padding:19px 22px; border-bottom:1px solid var(--line); }
     .project-heading h2 { margin:0; font:700 20px/1.2 ui-serif,Georgia,serif; }
+    .project-heading h2:focus { outline:none; }
     .project-heading span { color:var(--muted); font-size:12px; }
     .checkpoint { display:grid; grid-template-columns:58px 1fr; padding:20px 22px 21px 0;
       border-bottom:1px solid #ebe8e0; }
@@ -57,16 +97,20 @@
     .open li { padding:12px 0; border-top:1px solid #3a3a3a; }
     .open li:first-child { border-top:0; }
     .open small { display:block; margin-top:3px; color:#ff9a76; }
-    .open .empty { color:#b9b9b9; }
+    .open .empty,.open .more-open { color:#b9b9b9; }
     .empty-state { border:1px dashed var(--line); background:var(--card); padding:46px;
       text-align:center; color:var(--muted); }
     footer { margin-top:34px; padding-top:17px; border-top:1px solid var(--line);
       display:flex; justify-content:space-between; color:var(--muted); font-size:11px; }
     @media (max-width:760px) { .shell{padding:20px 14px 46px} .masthead{padding:30px 24px}
-      h1{font-size:32px} .metrics{grid-template-columns:repeat(2,1fr)}
-      .layout{grid-template-columns:1fr} aside{position:static} footer{display:block} }
+      .masthead::after{right:-132px;top:-112px} h1{font-size:32px}
+      .metrics{grid-template-columns:repeat(2,1fr)}
+      .controls{grid-template-columns:1fr;gap:14px} .overview-layout,.project-layout{grid-template-columns:1fr}
+      .overview-heading{display:block} .overview-heading p{margin-top:7px} .overview-grid{grid-template-columns:1fr}
+      aside{position:static} footer{display:block} footer span{display:block} footer span + span{margin-top:4px} }
     @media print { body{background:white} .shell{max-width:none;padding:0}
-      .masthead{break-inside:avoid} aside{position:static} details{display:none} }
+      .masthead{break-inside:avoid} .controls,.back-button{display:none} aside{position:static}
+      details{display:none} }
   </style>
 </head>
 <body>
@@ -82,14 +126,60 @@
       <div class="metric"><strong>3</strong><span>agents</span></div>
       <div class="metric"><strong>4/2</strong><span>done / partial</span></div>
     </section>
-    <div class="layout">
-      <div><section class="project"><div class="project-heading"><h2>release-ops</h2><span>2 checkpoints</span></div><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>12:04</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>hermes</span><span>completed</span></div><h3>Verified the release candidate on macOS and Linux</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Ran install, upgrade, rollback, and clean-machine smoke tests.</li></ul><div class="detail-label">Evidence</div><ul><li>CI run 31767359967; release checklist 14/14</li></ul></details></div></article><article class="checkpoint"><div class="checkpoint-rail"><span class="dot partial"></span><time>04:26</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>hermes</span><span>partial</span></div><h3>Added failed-payment alerting</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Routed failed payment events into the on-call digest with deduplication.</li></ul><div class="detail-label">Evidence</div><ul><li>Fixture replay: 12 events → 3 actionable alerts</li></ul></details></div></article></section><section class="project"><div class="project-heading"><h2>design-system</h2><span>2 checkpoints</span></div><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>11:31</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>claude</span><span>completed</span></div><h3>Shipped accessible checkout states</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Added keyboard, focus, error, and reduced-motion states to checkout.</li></ul><div class="detail-label">Evidence</div><ul><li>axe: 0 violations; screenshots in artifacts/checkout-a11y</li></ul></details></div></article><article class="checkpoint"><div class="checkpoint-rail"><span class="dot partial"></span><time>06:05</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>claude</span><span>partial</span></div><h3>Published the v2 migration guide</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Documented every breaking token rename with before/after examples.</li></ul><div class="detail-label">Evidence</div><ul><li>docs/migration-v2.md; link check passed</li></ul></details></div></article></section><section class="project"><div class="project-heading"><h2>checkout-api</h2><span>2 checkpoints</span></div><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>10:42</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>codex</span><span>completed</span></div><h3>Closed the inventory reservation race</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Made reservation writes idempotent under concurrent retries.</li></ul><div class="detail-label">Evidence</div><ul><li>184 tests passed; commit 8c4a7f2</li></ul></details></div></article><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>08:18</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>codex</span><span>completed</span></div><h3>Cut cold-start latency by 38%</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Moved schema loading out of the request path and warmed the cache.</li></ul><div class="detail-label">Evidence</div><ul><li>Benchmark: p95 812ms → 503ms across 500 cold starts</li></ul></details></div></article></section></div>
-      <aside><section class="open"><h2>Still open</h2><ul><li><span>Verify VoiceOver flow on a physical iPhone.</span><small>design-system</small></li><li><span>Watch production retry volume after Monday&#x27;s deploy.</span><small>checkout-api</small></li><li><span>Add the React Native example.</span><small>design-system</small></li><li><span>Tune the retry threshold after one week of data.</span><small>release-ops</small></li></ul></section></aside>
-    </div>
+    <section class="controls" aria-labelledby="project-picker-label">
+      <div><span class="control-kicker">Focus the digest</span>
+        <label id="project-picker-label" for="project-picker">Choose a project</label>
+        <p>Showing <strong id="current-view-label">All projects overview</strong></p>
+      </div>
+      <select id="project-picker">
+        <option value="overview">All projects overview</option>
+        <option value="project-0">release-ops (2)</option><option value="project-1">design-system (2)</option><option value="project-2">checkout-api (2)</option>
+      </select>
+    </section>
+    <section class="digest-view" id="overview" data-digest-view>
+      <div class="overview-layout">
+        <div><div class="overview-heading"><div><span class="section-kicker">Overview</span><h2>Choose what you want to inspect.</h2></div><p>Recent outcomes stay visible. Full timelines appear only when you select a project.</p></div><div class="overview-grid"><button class="project-card" type="button" data-select-project="project-0"><span class="project-card-top"><strong>release-ops</strong><span aria-hidden="true">→</span></span><span class="project-count">2 checkpoints · 1 open</span><span class="project-preview"><span>Verified the release candidate on macOS and Linux</span><span>Added failed-payment alerting</span></span><span class="project-link">View project</span></button><button class="project-card" type="button" data-select-project="project-1"><span class="project-card-top"><strong>design-system</strong><span aria-hidden="true">→</span></span><span class="project-count">2 checkpoints · 2 open</span><span class="project-preview"><span>Shipped accessible checkout states</span><span>Published the v2 migration guide</span></span><span class="project-link">View project</span></button><button class="project-card" type="button" data-select-project="project-2"><span class="project-card-top"><strong>checkout-api</strong><span aria-hidden="true">→</span></span><span class="project-count">2 checkpoints · 1 open</span><span class="project-preview"><span>Closed the inventory reservation race</span><span>Cut cold-start latency by 38%</span></span><span class="project-link">View project</span></button></div></div>
+        <aside><section class="open"><h2>Still open</h2><ul><li><span>Verify VoiceOver flow on a physical iPhone.</span><small>design-system</small></li><li><span>Watch production retry volume after Monday&#x27;s deploy.</span><small>checkout-api</small></li><li><span>Add the React Native example.</span><small>design-system</small></li><li><span>Tune the retry threshold after one week of data.</span><small>release-ops</small></li></ul></section></aside>
+      </div>
+    </section>
+    <section class="digest-view" id="project-0" data-digest-view hidden><button class="back-button" type="button" data-select-project="overview">← All projects</button><div class="project-layout"><section class="project-detail"><div class="project-heading"><h2 tabindex="-1">release-ops</h2><span>2 checkpoints</span></div><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>12:04</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>hermes</span><span>completed</span></div><h3>Verified the release candidate on macOS and Linux</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Ran install, upgrade, rollback, and clean-machine smoke tests.</li></ul><div class="detail-label">Evidence</div><ul><li>CI run 31767359967; release checklist 14/14</li></ul></details></div></article><article class="checkpoint"><div class="checkpoint-rail"><span class="dot partial"></span><time>04:26</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>hermes</span><span>partial</span></div><h3>Added failed-payment alerting</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Routed failed payment events into the on-call digest with deduplication.</li></ul><div class="detail-label">Evidence</div><ul><li>Fixture replay: 12 events → 3 actionable alerts</li></ul></details></div></article></section><aside><section class="open"><h2>Still open here</h2><ul><li><span>Tune the retry threshold after one week of data.</span></li></ul></section></aside></div></section><section class="digest-view" id="project-1" data-digest-view hidden><button class="back-button" type="button" data-select-project="overview">← All projects</button><div class="project-layout"><section class="project-detail"><div class="project-heading"><h2 tabindex="-1">design-system</h2><span>2 checkpoints</span></div><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>11:31</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>claude</span><span>completed</span></div><h3>Shipped accessible checkout states</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Added keyboard, focus, error, and reduced-motion states to checkout.</li></ul><div class="detail-label">Evidence</div><ul><li>axe: 0 violations; screenshots in artifacts/checkout-a11y</li></ul></details></div></article><article class="checkpoint"><div class="checkpoint-rail"><span class="dot partial"></span><time>06:05</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>claude</span><span>partial</span></div><h3>Published the v2 migration guide</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Documented every breaking token rename with before/after examples.</li></ul><div class="detail-label">Evidence</div><ul><li>docs/migration-v2.md; link check passed</li></ul></details></div></article></section><aside><section class="open"><h2>Still open here</h2><ul><li><span>Verify VoiceOver flow on a physical iPhone.</span></li><li><span>Add the React Native example.</span></li></ul></section></aside></div></section><section class="digest-view" id="project-2" data-digest-view hidden><button class="back-button" type="button" data-select-project="overview">← All projects</button><div class="project-layout"><section class="project-detail"><div class="project-heading"><h2 tabindex="-1">checkout-api</h2><span>2 checkpoints</span></div><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>10:42</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>codex</span><span>completed</span></div><h3>Closed the inventory reservation race</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Made reservation writes idempotent under concurrent retries.</li></ul><div class="detail-label">Evidence</div><ul><li>184 tests passed; commit 8c4a7f2</li></ul></details></div></article><article class="checkpoint"><div class="checkpoint-rail"><span class="dot complete"></span><time>08:18</time></div><div class="checkpoint-body"><div class="checkpoint-meta"><span>codex</span><span>completed</span></div><h3>Cut cold-start latency by 38%</h3><details><summary>Outcome &amp; evidence</summary><div class="detail-label">Accomplished</div><ul><li>Moved schema loading out of the request path and warmed the cache.</li></ul><div class="detail-label">Evidence</div><ul><li>Benchmark: p95 812ms → 503ms across 500 cold starts</li></ul></details></div></article></section><aside><section class="open"><h2>Still open here</h2><ul><li><span>Watch production retry volume after Monday&#x27;s deploy.</span></li></ul></section></aside></div></section>
     <footer>
       <span>Generated by Worklog · private, local, evidence-based</span>
       <span>2026-08-16 21:05 PDT</span>
     </footer>
   </main>
+  <script>
+    (() => {
+      const picker = document.getElementById("project-picker");
+      const currentLabel = document.getElementById("current-view-label");
+      const views = Array.from(document.querySelectorAll("[data-digest-view]"));
+
+      function showView(requestedId, moveFocus) {
+        const requested = document.getElementById(requestedId);
+        const selected = requested && requested.hasAttribute("data-digest-view")
+          ? requested : document.getElementById("overview");
+        views.forEach((view) => { view.hidden = view !== selected; });
+        picker.value = selected.id;
+        const option = picker.options[picker.selectedIndex];
+        currentLabel.textContent = option ? option.textContent : "All projects overview";
+        if (moveFocus && selected.id !== "overview") {
+          const heading = selected.querySelector("h2");
+          if (heading) heading.focus();
+        }
+        try {
+          const hash = selected.id === "overview" ? "" : `#${selected.id}`;
+          history.replaceState(null, "", `${location.pathname}${location.search}${hash}`);
+        } catch (error) {
+          // Navigation still works when a browser restricts history on local files.
+        }
+      }
+
+      picker.addEventListener("change", () => showView(picker.value, true));
+      document.querySelectorAll("[data-select-project]").forEach((button) => {
+        button.addEventListener("click", () => showView(button.dataset.selectProject, true));
+      });
+      showView(location.hash.slice(1) || "overview", false);
+    })();
+  </script>
 </body>
 </html>

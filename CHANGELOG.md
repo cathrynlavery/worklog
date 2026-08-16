@@ -9,7 +9,7 @@ All notable changes to Worklog are documented here.
 - Evidence-required checkpoints grouped by stable agent session.
 - Claude Code, Codex, and generic-agent adapters.
 - Private Markdown daily reports and scheduled report generation on macOS and Linux.
-- Self-contained daily and weekly HTML digests with project timelines, agent/status labels, expandable evidence, and open-item rollups.
+- Self-contained daily and weekly HTML digests with a compact project overview, project selector, focused timelines, agent/status labels, expandable evidence, and open-item rollups.
 - Nightly HTML digest scheduling with `worklog install-digests`.
 - Ledger import with idempotent conflict-aware merge mode.
 - Installation diagnostics, permissions checks, redaction, and cutover verification.
@@ -18,4 +18,4 @@ All notable changes to Worklog are documented here.
 ### Security
 
 - Ledger directories use mode `0700`; checkpoint, report, digest, and scheduler-log files use mode `0600`.
-- HTML output escapes checkpoint content and contains no JavaScript or external assets.
+- HTML output escapes checkpoint content; its fixed inline selector loads no external code or assets and makes no network requests.

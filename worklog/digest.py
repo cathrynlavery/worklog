@@ -171,7 +171,7 @@ def build_digest(
     until: dt.datetime,
     generated_at: dt.datetime | None = None,
 ) -> str:
-    """Return one self-contained, script-free HTML digest."""
+    """Return one self-contained HTML digest with local project navigation."""
     if period not in {"daily", "weekly"}:
         raise ValueError("period must be 'daily' or 'weekly'")
     selected = sorted(
@@ -208,8 +208,39 @@ def build_digest(
         ),
     )
 
-    project_sections: list[str] = []
-    for project, project_entries in ordered_projects:
+    remaining_by_project: dict[str, list[str]] = defaultdict(list)
+    for project, item in remaining:
+        remaining_by_project[project].append(item)
+
+    picker_options: list[str] = []
+    project_cards: list[str] = []
+    project_views: list[str] = []
+    for project_index, (project, project_entries) in enumerate(ordered_projects):
+        project_id = f"project-{project_index}"
+        project_open = remaining_by_project[project]
+        picker_options.append(
+            f'<option value="{project_id}">{_safe(project)} '
+            f"({len(project_entries)})</option>"
+        )
+
+        if project_index < 12:
+            preview_titles = "".join(
+                f"<span>{_safe(entry.title)}</span>" for entry in project_entries[:2]
+            )
+            project_cards.append(
+                '<button class="project-card" type="button" '
+                f'data-select-project="{project_id}">'
+                '<span class="project-card-top">'
+                f'<strong>{_safe(project)}</strong><span aria-hidden="true">→</span>'
+                "</span>"
+                f'<span class="project-count">{len(project_entries)} checkpoint'
+                f'{"" if len(project_entries) == 1 else "s"} · '
+                f'{len(project_open)} open</span>'
+                f'<span class="project-preview">{preview_titles}</span>'
+                '<span class="project-link">View project</span>'
+                "</button>"
+            )
+
         checkpoints: list[str] = []
         for entry in project_entries:
             state = "complete" if entry.status == "completed" else "partial"
@@ -226,32 +257,70 @@ def build_digest(
                 f"{_detail_block(details[entry])}"
                 "</div></article>"
             )
-        project_sections.append(
-            '<section class="project">'
+        if project_open:
+            project_open_items = "".join(
+                f"<li><span>{_safe(item)}</span></li>" for item in project_open
+            )
+        else:
+            project_open_items = '<li class="empty">Nothing left open.</li>'
+
+        project_views.append(
+            f'<section class="digest-view" id="{project_id}" '
+            'data-digest-view hidden>'
+            '<button class="back-button" type="button" '
+            'data-select-project="overview">← All projects</button>'
+            '<div class="project-layout">'
+            '<section class="project-detail">'
             '<div class="project-heading">'
-            f"<h2>{_safe(project)}</h2>"
+            f'<h2 tabindex="-1">{_safe(project)}</h2>'
             f'<span>{len(project_entries)} checkpoint'
             f'{"" if len(project_entries) == 1 else "s"}</span>'
             "</div>"
             f'{"".join(checkpoints)}'
             "</section>"
+            '<aside><section class="open"><h2>Still open here</h2><ul>'
+            f"{project_open_items}</ul></section></aside>"
+            "</div></section>"
         )
 
-    if remaining:
-        open_items = "".join(
+    overview_remaining = remaining[:8]
+    if overview_remaining:
+        overview_open_items = "".join(
             f'<li><span>{_safe(item)}</span><small>{_safe(project)}</small></li>'
-            for project, item in remaining
+            for project, item in overview_remaining
+        )
+        if len(remaining) > len(overview_remaining):
+            overview_open_items += (
+                '<li class="more-open">+'
+                f"{len(remaining) - len(overview_remaining)} more · select a project"
+                "</li>"
+            )
+    else:
+        overview_open_items = '<li class="empty">No remaining items were recorded.</li>'
+
+    if project_cards:
+        project_overflow = ""
+        if len(ordered_projects) > len(project_cards):
+            project_overflow = (
+                '<p class="overview-more">+'
+                f"{len(ordered_projects) - len(project_cards)} more projects. "
+                "Use the selector above to jump directly to one.</p>"
+            )
+        overview_activity = (
+            '<div class="overview-heading"><div><span class="section-kicker">Overview</span>'
+            '<h2>Choose what you want to inspect.</h2></div>'
+            '<p>Recent outcomes stay visible. Full timelines appear only when you '
+            "select a project.</p></div>"
+            f'<div class="overview-grid">{"".join(project_cards)}</div>'
+            f"{project_overflow}"
         )
     else:
-        open_items = '<li class="empty">No remaining items were recorded.</li>'
-
-    if project_sections:
-        activity = "".join(project_sections)
-    else:
-        activity = (
+        overview_activity = (
             '<section class="empty-state"><p>No checkpoints were recorded in '
             "this window.</p></section>"
         )
+
+    disabled_selector = " disabled" if not ordered_projects else ""
 
     period_name = "Daily" if period == "daily" else "Weekly"
     return f"""<!doctype html>
@@ -272,6 +341,7 @@ def build_digest(
       position:relative; overflow:hidden; }}
     .masthead::after {{ content:""; position:absolute; width:220px; height:220px;
       right:-80px; top:-120px; border:44px solid var(--accent); border-radius:50%; opacity:.9; }}
+    .masthead > * {{ position:relative; z-index:1; }}
     .eyebrow {{ color:#ff9a76; font-size:12px; font-weight:800; letter-spacing:.16em;
       text-transform:uppercase; }}
     h1 {{ max-width:720px; margin:12px 0 4px; font:700 42px/1.08 ui-serif,Georgia,serif;
@@ -283,11 +353,50 @@ def build_digest(
     .metric strong {{ display:block; font:700 28px/1 ui-serif,Georgia,serif; }}
     .metric span {{ color:var(--muted); font-size:12px; text-transform:uppercase;
       letter-spacing:.08em; }}
-    .layout {{ display:grid; grid-template-columns:minmax(0,2fr) minmax(250px,1fr); gap:28px; }}
-    .project {{ background:var(--card); border:1px solid var(--line); margin-bottom:20px; }}
+    .controls {{ display:grid; grid-template-columns:minmax(0,1fr) minmax(280px,420px);
+      align-items:end; gap:24px; padding:22px 24px; margin-bottom:24px; background:var(--card);
+      border:1px solid var(--line); }}
+    .control-kicker,.section-kicker {{ display:block; margin-bottom:3px; color:var(--accent);
+      font-size:10px; font-weight:800; letter-spacing:.13em; text-transform:uppercase; }}
+    .controls label {{ display:block; font:700 20px/1.2 ui-serif,Georgia,serif; }}
+    .controls p {{ margin:5px 0 0; color:var(--muted); font-size:12px; }}
+    select {{ width:100%; min-height:46px; padding:10px 42px 10px 13px; color:var(--ink);
+      background:var(--paper); border:1px solid #aaa59a; border-radius:0;
+      font:600 14px/1.2 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }}
+    select:focus-visible,.project-card:focus-visible,.back-button:focus-visible {{ outline:3px solid
+      var(--accent-soft); outline-offset:2px; }}
+    .digest-view[hidden] {{ display:none !important; }}
+    .overview-layout,.project-layout {{ display:grid;
+      grid-template-columns:minmax(0,2fr) minmax(250px,1fr); gap:28px; }}
+    .overview-heading {{ display:flex; align-items:end; justify-content:space-between; gap:24px;
+      margin-bottom:15px; }}
+    .overview-heading h2 {{ margin:0; font:700 24px/1.15 ui-serif,Georgia,serif; }}
+    .overview-heading p {{ max-width:330px; margin:0; color:var(--muted); font-size:13px; }}
+    .overview-grid {{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }}
+    .project-card {{ appearance:none; min-width:0; padding:18px; text-align:left; color:var(--ink);
+      background:var(--card); border:1px solid var(--line); border-top:3px solid var(--ink);
+      border-radius:0; cursor:pointer; font:inherit; transition:transform .12s ease,border-color .12s ease; }}
+    .project-card:hover {{ transform:translateY(-2px); border-color:var(--accent); }}
+    .project-card-top {{ display:flex; align-items:start; justify-content:space-between; gap:10px; }}
+    .project-card-top strong {{ overflow-wrap:anywhere; font:700 17px/1.25 ui-serif,Georgia,serif; }}
+    .project-card-top > span {{ color:var(--accent); font-size:20px; }}
+    .project-count {{ display:block; margin:5px 0 13px; color:var(--muted); font-size:11px;
+      font-weight:700; letter-spacing:.04em; text-transform:uppercase; }}
+    .project-preview {{ display:block; min-height:43px; color:#3f4146; font-size:12px; }}
+    .project-preview span {{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }}
+    .project-preview span + span {{ margin-top:3px; color:var(--muted); }}
+    .project-link {{ display:block; margin-top:14px; color:#b8431d; font-size:11px; font-weight:800;
+      letter-spacing:.06em; text-transform:uppercase; }}
+    .overview-more {{ margin:14px 0 0; padding:12px 14px; color:var(--muted);
+      background:#e9e5dc; font-size:12px; }}
+    .back-button {{ appearance:none; margin:0 0 14px; padding:0; color:#9b3819; background:none;
+      border:0; cursor:pointer; font:800 12px/1.3 ui-sans-serif,-apple-system,BlinkMacSystemFont,
+      "Segoe UI",sans-serif; letter-spacing:.04em; text-transform:uppercase; }}
+    .project-detail {{ background:var(--card); border:1px solid var(--line); }}
     .project-heading {{ display:flex; align-items:baseline; justify-content:space-between;
       padding:19px 22px; border-bottom:1px solid var(--line); }}
     .project-heading h2 {{ margin:0; font:700 20px/1.2 ui-serif,Georgia,serif; }}
+    .project-heading h2:focus {{ outline:none; }}
     .project-heading span {{ color:var(--muted); font-size:12px; }}
     .checkpoint {{ display:grid; grid-template-columns:58px 1fr; padding:20px 22px 21px 0;
       border-bottom:1px solid #ebe8e0; }}
@@ -313,16 +422,20 @@ def build_digest(
     .open li {{ padding:12px 0; border-top:1px solid #3a3a3a; }}
     .open li:first-child {{ border-top:0; }}
     .open small {{ display:block; margin-top:3px; color:#ff9a76; }}
-    .open .empty {{ color:#b9b9b9; }}
+    .open .empty,.open .more-open {{ color:#b9b9b9; }}
     .empty-state {{ border:1px dashed var(--line); background:var(--card); padding:46px;
       text-align:center; color:var(--muted); }}
     footer {{ margin-top:34px; padding-top:17px; border-top:1px solid var(--line);
       display:flex; justify-content:space-between; color:var(--muted); font-size:11px; }}
     @media (max-width:760px) {{ .shell{{padding:20px 14px 46px}} .masthead{{padding:30px 24px}}
-      h1{{font-size:32px}} .metrics{{grid-template-columns:repeat(2,1fr)}}
-      .layout{{grid-template-columns:1fr}} aside{{position:static}} footer{{display:block}} }}
+      .masthead::after{{right:-132px;top:-112px}} h1{{font-size:32px}}
+      .metrics{{grid-template-columns:repeat(2,1fr)}}
+      .controls{{grid-template-columns:1fr;gap:14px}} .overview-layout,.project-layout{{grid-template-columns:1fr}}
+      .overview-heading{{display:block}} .overview-heading p{{margin-top:7px}} .overview-grid{{grid-template-columns:1fr}}
+      aside{{position:static}} footer{{display:block}} footer span{{display:block}} footer span + span{{margin-top:4px}} }}
     @media print {{ body{{background:white}} .shell{{max-width:none;padding:0}}
-      .masthead{{break-inside:avoid}} aside{{position:static}} details{{display:none}} }}
+      .masthead{{break-inside:avoid}} .controls,.back-button{{display:none}} aside{{position:static}}
+      details{{display:none}} }}
   </style>
 </head>
 <body>
@@ -338,15 +451,61 @@ def build_digest(
       <div class="metric"><strong>{len(agents)}</strong><span>agents</span></div>
       <div class="metric"><strong>{completed}/{partial}</strong><span>done / partial</span></div>
     </section>
-    <div class="layout">
-      <div>{activity}</div>
-      <aside><section class="open"><h2>Still open</h2><ul>{open_items}</ul></section></aside>
-    </div>
+    <section class="controls" aria-labelledby="project-picker-label">
+      <div><span class="control-kicker">Focus the digest</span>
+        <label id="project-picker-label" for="project-picker">Choose a project</label>
+        <p>Showing <strong id="current-view-label">All projects overview</strong></p>
+      </div>
+      <select id="project-picker"{disabled_selector}>
+        <option value="overview">All projects overview</option>
+        {"".join(picker_options)}
+      </select>
+    </section>
+    <section class="digest-view" id="overview" data-digest-view>
+      <div class="overview-layout">
+        <div>{overview_activity}</div>
+        <aside><section class="open"><h2>Still open</h2><ul>{overview_open_items}</ul></section></aside>
+      </div>
+    </section>
+    {"".join(project_views)}
     <footer>
       <span>Generated by Worklog · private, local, evidence-based</span>
       <span>{generated.strftime('%Y-%m-%d %H:%M %Z')}</span>
     </footer>
   </main>
+  <script>
+    (() => {{
+      const picker = document.getElementById("project-picker");
+      const currentLabel = document.getElementById("current-view-label");
+      const views = Array.from(document.querySelectorAll("[data-digest-view]"));
+
+      function showView(requestedId, moveFocus) {{
+        const requested = document.getElementById(requestedId);
+        const selected = requested && requested.hasAttribute("data-digest-view")
+          ? requested : document.getElementById("overview");
+        views.forEach((view) => {{ view.hidden = view !== selected; }});
+        picker.value = selected.id;
+        const option = picker.options[picker.selectedIndex];
+        currentLabel.textContent = option ? option.textContent : "All projects overview";
+        if (moveFocus && selected.id !== "overview") {{
+          const heading = selected.querySelector("h2");
+          if (heading) heading.focus();
+        }}
+        try {{
+          const hash = selected.id === "overview" ? "" : `#${{selected.id}}`;
+          history.replaceState(null, "", `${{location.pathname}}${{location.search}}${{hash}}`);
+        }} catch (error) {{
+          // Navigation still works when a browser restricts history on local files.
+        }}
+      }}
+
+      picker.addEventListener("change", () => showView(picker.value, true));
+      document.querySelectorAll("[data-select-project]").forEach((button) => {{
+        button.addEventListener("click", () => showView(button.dataset.selectProject, true));
+      }});
+      showView(location.hash.slice(1) || "overview", false);
+    }})();
+  </script>
 </body>
 </html>
 """

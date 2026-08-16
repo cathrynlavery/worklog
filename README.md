@@ -37,7 +37,7 @@ Worklog makes the checkpoint—not the conversation—the unit of progress.
 |---|---|
 | **Evidence-required checkpoints** | Every record needs a test, commit, URL, run ID, or artifact path. |
 | **One readable ledger per session** | Human-readable Markdown grouped by agent and stable session ID. |
-| **Daily + weekly HTML digests** | Self-contained, responsive, script-free summaries with project timelines and open work. |
+| **Daily + weekly HTML digests** | Self-contained, responsive summaries with project navigation, timelines, and open work. |
 | **Automatic nightly generation** | Native LaunchAgent support on macOS and cron support on Linux. |
 | **Private local storage** | Directories use `0700`; checkpoint, report, digest, and log files use `0600`. |
 
@@ -218,7 +218,7 @@ Files land in:
 
 Use `--date YYYY-MM-DD` to regenerate a historical day or its containing calendar week. Without `--write`, a single daily or weekly digest is printed to stdout.
 
-The HTML is responsive, printable, self-contained, and script-free. Checkpoint text is escaped before rendering. Expand **Outcome & evidence** inside the digest when you need the receipt; scan the project timeline when you only need the headline.
+The HTML is responsive, printable, and self-contained. It opens on a compact overview, then lets you select one project to inspect its timeline and remaining work. Checkpoint text is escaped before rendering; the tiny inline selector loads no external assets and makes no network requests. Expand **Outcome & evidence** when you need the receipt.
 
 Install nightly digest generation:
 
