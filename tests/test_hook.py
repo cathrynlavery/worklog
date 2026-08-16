@@ -9,6 +9,7 @@ import sys
 import unittest
 from unittest import mock
 
+from worklog.cli import main as cli_main
 from worklog.hook import build_response, main
 
 from tests.support import TempLedger
@@ -82,6 +83,16 @@ class HookTests(TempLedger):
             "session-abc",
             response["hookSpecificOutput"]["additionalContext"],
         )
+
+    def test_cli_hook_subcommand_uses_the_same_protocol(self) -> None:
+        output = io.StringIO()
+        with mock.patch.object(sys, "stdin", io.StringIO('{"session_id":"cli"}')):
+            with contextlib.redirect_stdout(output):
+                exit_code = cli_main(["hook"])
+
+        self.assertEqual(exit_code, 0)
+        response = json.loads(output.getvalue())
+        self.assertIn("cli", self.additional_context(response))
 
 
 if __name__ == "__main__":

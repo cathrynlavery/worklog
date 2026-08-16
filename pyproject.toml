@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-worklog"
+version = "0.1.0"
+description = "A private, evidence-required work journal for coding agents."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [{name = "Cathryn Lavery"}]
+keywords = [
+  "ai-agents",
+  "claude-code",
+  "codex",
+  "developer-tools",
+  "productivity",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development",
+  "Topic :: Utilities",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/cathrynlavery/worklog"
+Issues = "https://github.com/cathrynlavery/worklog/issues"
+Source = "https://github.com/cathrynlavery/worklog"
+
+[project.scripts]
+worklog = "worklog.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["worklog*"]

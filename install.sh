@@ -128,7 +128,7 @@ echo
 echo "Next, run: worklog doctor"
 echo
 echo "Claude Code hook (merge this into ~/.claude/settings.json):"
-HOOK_COMMAND_JSON=$("$PYTHON_PATH" -c 'import json, shlex, sys; print(json.dumps("PYTHONPATH=%s %s -m worklog.hook" % (shlex.quote(sys.argv[1]), shlex.quote(sys.argv[2]))))' "$REPO_DIR" "$PYTHON_PATH")
+HOOK_COMMAND_JSON=$("$PYTHON_PATH" -c 'import json, shlex, sys; print(json.dumps("%s hook" % shlex.quote(sys.argv[1])))' "$LAUNCHER")
 echo "{
   \"hooks\": {
     \"UserPromptSubmit\": [

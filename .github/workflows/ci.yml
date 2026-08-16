@@ -3,6 +3,10 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -25,7 +29,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install package
+        run: python3 -m pip install .
       - name: Compile package
         run: python3 -m compileall worklog
       - name: Run tests
         run: python3 -m unittest discover -s tests -v
+      - name: Smoke-test installed command
+        run: |
+          worklog --version
+          worklog --help

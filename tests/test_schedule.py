@@ -15,7 +15,14 @@ from pathlib import Path
 import worklog
 
 from worklog.paths import reports_dir
-from worklog.schedule import install_schedule, uninstall_schedule
+from worklog.schedule import (
+    DIGEST_CRONTAB_MARKER,
+    DIGEST_LABEL,
+    install_digest_schedule,
+    install_schedule,
+    uninstall_digest_schedule,
+    uninstall_schedule,
+)
 
 from tests.support import TempLedger, permission_mode, write_session
 
@@ -118,6 +125,69 @@ class ScheduleTests(TempLedger):
         quoted_log = shlex.quote(str(root_with_space / "reports" / "schedule.log"))
         self.assertIn(f"WORKLOG_DIR={quoted_root}", result.content)
         self.assertIn(f">> {quoted_log} 2>&1", result.content)
+
+    def test_digest_schedule_writes_both_html_windows(self) -> None:
+        now = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+        timestamp = now.isoformat().replace("+00:00", "Z")
+        write_session(
+            self.root,
+            "codex",
+            "scheduled-digest",
+            [(timestamp, "Digest checkpoint", "alpha", "completed")],
+        )
+        target = self.sandbox / "LaunchAgents" / f"{DIGEST_LABEL}.plist"
+        schedule = install_digest_schedule(
+            at="21:10",
+            platform_name="darwin",
+            dry_run=True,
+            target_path=target,
+        )
+        payload = plistlib.loads(schedule.content.encode("utf-8"))
+
+        self.assertEqual(payload["Label"], DIGEST_LABEL)
+        self.assertIn("digest", payload["ProgramArguments"])
+        self.assertIn("all", payload["ProgramArguments"])
+        self.assertTrue(payload["StandardOutPath"].endswith("digest-schedule.log"))
+
+        completed = subprocess.run(
+            payload["ProgramArguments"],
+            cwd="/",
+            env={**os.environ, **payload["EnvironmentVariables"]},
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        digest_dir = reports_dir() / "digests"
+        today = dt.datetime.now().astimezone().date()
+        iso_year, iso_week, _ = today.isocalendar()
+        self.assertTrue((digest_dir / f"daily-{today.isoformat()}.html").is_file())
+        self.assertTrue(
+            (digest_dir / f"weekly-{iso_year}-W{iso_week:02d}.html").is_file()
+        )
+
+    def test_linux_report_and_digest_cron_lines_coexist(self) -> None:
+        report = install_schedule(
+            at="21:00", platform_name="linux", dry_run=True
+        ).content
+        runner = FakeRunner(report)
+
+        digest = install_digest_schedule(
+            at="21:05", platform_name="linux", runner=runner
+        )
+
+        self.assertIn("# worklog-report", digest.content)
+        self.assertIn(DIGEST_CRONTAB_MARKER, digest.content)
+        self.assertIn("digest --period all --write --quiet", digest.content)
+
+        removed = uninstall_digest_schedule(
+            platform_name="linux", runner=runner
+        )
+
+        self.assertIn("# worklog-report", removed.content)
+        self.assertNotIn(DIGEST_CRONTAB_MARKER, removed.content)
 
     def test_macos_install_writes_injected_path_and_uninstall_removes_it(self) -> None:
         target = self.sandbox / "LaunchAgents" / "com.worklog.report.plist"

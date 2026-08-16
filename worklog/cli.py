@@ -11,12 +11,21 @@ from collections.abc import Sequence
 from dataclasses import asdict
 from pathlib import Path
 
+from . import __version__
+from .digest import build_digest, digest_window, write_digest
 from .doctor import render_checks, run_checks, worst_status
+from .hook import main as hook_main
 from .importer import ImportResult, import_ledger
 from .paths import ledger_root
 from .record import record
 from .report import build_report, write_report
-from .schedule import ScheduleResult, install_schedule, uninstall_schedule
+from .schedule import (
+    ScheduleResult,
+    install_digest_schedule,
+    install_schedule,
+    uninstall_digest_schedule,
+    uninstall_schedule,
+)
 from .view import collect_entries, filter_entries, parse_since, render
 
 
@@ -42,6 +51,7 @@ def _build_parser() -> tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
         prog="worklog",
         description="Record verified work in the shared session worklog.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     _add_viewer_arguments(parser)
     subparsers = parser.add_subparsers(dest="command")
 
@@ -60,6 +70,7 @@ def _build_parser() -> tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
     add_parser.add_argument("--status", choices=("completed", "partial"))
 
     subparsers.add_parser("where", help="Print the resolved ledger root.")
+    subparsers.add_parser("hook", help="Run the Claude Code prompt hook.")
     import_parser = subparsers.add_parser(
         "import", help="Import an existing accomplishment ledger."
     )
@@ -86,6 +97,15 @@ def _build_parser() -> tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
     report_parser.add_argument("--until")
     report_parser.add_argument("--write", action="store_true")
     report_parser.add_argument("--quiet", action="store_true")
+    digest_parser = subparsers.add_parser(
+        "digest", help="Build a self-contained daily or weekly HTML digest."
+    )
+    digest_parser.add_argument(
+        "--period", choices=("daily", "weekly", "all"), default="daily"
+    )
+    digest_parser.add_argument("--date")
+    digest_parser.add_argument("--write", action="store_true")
+    digest_parser.add_argument("--quiet", action="store_true")
     install_report_parser = subparsers.add_parser(
         "install-report", help="Install the nightly report schedule."
     )
@@ -95,6 +115,16 @@ def _build_parser() -> tuple[argparse.ArgumentParser, argparse.ArgumentParser]:
         "uninstall-report", help="Remove the nightly report schedule."
     )
     uninstall_report_parser.add_argument("--dry-run", action="store_true")
+    install_digest_parser = subparsers.add_parser(
+        "install-digests",
+        help="Install a nightly daily-and-weekly HTML digest schedule.",
+    )
+    install_digest_parser.add_argument("--at", required=True)
+    install_digest_parser.add_argument("--dry-run", action="store_true")
+    uninstall_digest_parser = subparsers.add_parser(
+        "uninstall-digests", help="Remove the nightly HTML digest schedule."
+    )
+    uninstall_digest_parser.add_argument("--dry-run", action="store_true")
     return parser, add_parser
 
 
@@ -180,6 +210,47 @@ def _run_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_digest(args: argparse.Namespace) -> int:
+    if args.period == "all" and not args.write:
+        print("--period all requires --write", file=sys.stderr)
+        return 2
+    try:
+        day = (
+            dt.date.fromisoformat(args.date)
+            if args.date is not None
+            else dt.datetime.now().astimezone().date()
+        )
+    except ValueError:
+        print(f"invalid --date value {args.date!r}; use YYYY-MM-DD", file=sys.stderr)
+        return 2
+
+    periods = ("daily", "weekly") if args.period == "all" else (args.period,)
+    written: list[Path] = []
+    rendered: list[str] = []
+    all_entries = collect_entries()
+    for period in periods:
+        since, until = digest_window(period, day=day)
+        entries = filter_entries(all_entries, since=since, until=until)
+        text = build_digest(
+            entries,
+            period=period,
+            since=since,
+            until=until,
+        )
+        if args.write:
+            written.append(write_digest(text, period=period, day=day))
+        else:
+            rendered.append(text)
+
+    if not args.quiet:
+        if written:
+            for path in written:
+                print(path)
+        else:
+            print(rendered[0], end="")
+    return 0
+
+
 def _print_schedule_result(result: ScheduleResult, *, show_content: bool) -> None:
     print(result.message)
     if result.path is not None:
@@ -211,6 +282,29 @@ def _run_uninstall_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_install_digests(args: argparse.Namespace) -> int:
+    try:
+        result = install_digest_schedule(at=args.at, dry_run=args.dry_run)
+    except ValueError as error:
+        print(error, file=sys.stderr)
+        return 2
+    except (OSError, RuntimeError) as error:
+        print(error, file=sys.stderr)
+        return 1
+    _print_schedule_result(result, show_content=args.dry_run)
+    return 0
+
+
+def _run_uninstall_digests(args: argparse.Namespace) -> int:
+    try:
+        result = uninstall_digest_schedule(dry_run=args.dry_run)
+    except (OSError, RuntimeError) as error:
+        print(error, file=sys.stderr)
+        return 1
+    _print_schedule_result(result, show_content=args.dry_run)
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the worklog command-line interface."""
     parser, add_parser = _build_parser()
@@ -221,16 +315,24 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command == "where":
         print(ledger_root())
         return 0
+    if args.command == "hook":
+        return hook_main()
     if args.command == "import":
         return _run_import(args)
     if args.command == "doctor":
         return _run_doctor(args)
     if args.command == "report":
         return _run_report(args)
+    if args.command == "digest":
+        return _run_digest(args)
     if args.command == "install-report":
         return _run_install_report(args)
     if args.command == "uninstall-report":
         return _run_uninstall_report(args)
+    if args.command == "install-digests":
+        return _run_install_digests(args)
+    if args.command == "uninstall-digests":
+        return _run_uninstall_digests(args)
     if not args.done:
         add_parser.error("at least one --done item is required")
 
