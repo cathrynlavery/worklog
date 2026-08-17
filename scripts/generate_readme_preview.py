@@ -90,10 +90,10 @@ CHECKPOINTS = {
 }
 
 PREVIEW_COMPUTERS = {
-    "cathryn": "studio.local",
-    "codex": "silverfox.local",
-    "claude": "studio.local",
-    "hermes": "knox.local",
+    "cathryn": "laptop.local",
+    "codex": "mini.local",
+    "claude": "laptop.local",
+    "hermes": "desktop.local",
 }
 
 

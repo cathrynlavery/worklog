@@ -12,7 +12,7 @@
 - **Branch:** `fix/idempotent-reservations`
 - **Commit:** `8c4a7f2`
 - **Working tree:** clean
-- **Machine:** `studio.local`
+- **Machine:** `laptop.local`
 
 ### Accomplished
 
