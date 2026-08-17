@@ -11,7 +11,12 @@ from unittest import mock
 
 from worklog import cli
 import worklog.record as record_module
-from worklog.record import MAX_ITEM_LENGTH, git_metadata, safe_component
+from worklog.record import (
+    MAX_ITEM_LENGTH,
+    git_metadata,
+    machine_name,
+    safe_component,
+)
 from worklog.view import parse_session_file
 
 from tests.support import TempLedger, permission_mode
@@ -138,6 +143,26 @@ class RecordTests(TempLedger):
 
         self.assertEqual(metadata["branch"], "not a Git repository")
         self.assertEqual(metadata["root"], str(directory))
+
+    def test_machine_name_prefers_explicit_override(self) -> None:
+        with mock.patch.dict(os.environ, {"WORKLOG_MACHINE": "Silverfox"}):
+            self.assertEqual(machine_name(), "Silverfox")
+
+    def test_machine_name_uses_macos_computer_name(self) -> None:
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch.object(record_module.platform, "system", return_value="Darwin"),
+            mock.patch.object(record_module, "run", return_value="Silverfox"),
+        ):
+            self.assertEqual(machine_name(), "Silverfox")
+
+    def test_machine_name_falls_back_to_platform_node(self) -> None:
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch.object(record_module.platform, "system", return_value="Linux"),
+            mock.patch.object(record_module.platform, "node", return_value="worker-1"),
+        ):
+            self.assertEqual(machine_name(), "worker-1")
 
     def test_evidence_is_redacted_before_writing(self) -> None:
         token = "sk-" + "r" * 24

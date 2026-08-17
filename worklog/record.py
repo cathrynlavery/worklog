@@ -101,6 +101,18 @@ def _inferred_agent() -> str:
     return "agent"
 
 
+def machine_name() -> str:
+    """Return a stable, human-readable name for the computer."""
+    override = os.environ.get("WORKLOG_MACHINE", "").strip()
+    if override:
+        return override
+    if platform.system() == "Darwin":
+        computer_name = run(["/usr/sbin/scutil", "--get", "ComputerName"])
+        if computer_name:
+            return computer_name
+    return platform.node()
+
+
 def record(
     *,
     title: str,
@@ -167,7 +179,7 @@ def record(
         f"- **Branch:** `{clean_item(metadata['branch'])}`\n"
         f"- **Commit:** `{clean_item(metadata['commit'])}`\n"
         f"- **Working tree:** {clean_item(metadata['working_tree'])}\n"
-        f"- **Machine:** `{clean_item(platform.node())}`\n\n"
+        f"- **Machine:** `{clean_item(machine_name())}`\n\n"
         "### Accomplished\n\n"
         f"{format_list(done, checked=True)}\n\n"
         "### Evidence\n\n"
