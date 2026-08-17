@@ -7,3 +7,9 @@ venv/
 build/
 dist/
 .DS_Store
+
+# Live ledger if someone runs worklog inside a checkout
+sessions/
+reports/
+digests/
+.worklog-python

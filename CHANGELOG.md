@@ -16,6 +16,11 @@ All notable changes to Worklog are documented here.
 - Installation diagnostics, permissions checks, redaction, and cutover verification.
 - Standard Python packaging and a `worklog --version` command.
 
+### Changed
+
+- Replaced the example checkpoint with a synthetic public fixture. The previous example linked a private repository.
+- Documented the `agent-worklog` package name and the Python 3.10+ requirement in the README and contributing guide.
+
 ### Security
 
 - Ledger directories use mode `0700`; checkpoint, report, digest, and scheduler-log files use mode `0600`.
