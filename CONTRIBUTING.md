@@ -4,13 +4,16 @@ Worklog should remain small, local-first, and understandable in one sitting.
 
 ## Development setup
 
+Worklog requires Python 3.10 or newer. Apple's default `python3` is often still 3.9, so check `python3 --version` before running tests.
+
 ```sh
 git clone https://github.com/cathrynlavery/worklog.git
 cd worklog
+python3 --version
 python3 -m unittest discover -s tests
 ```
 
-The runtime supports Python 3.10+ and intentionally has no third-party dependencies. Development tools are optional.
+The runtime intentionally has no third-party dependencies. Development tools are optional.
 
 ## Before opening a pull request
 

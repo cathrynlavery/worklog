@@ -63,7 +63,7 @@ The installer creates `~/.local/bin/worklog`, chooses a compatible Python interp
 
 ### pipx
 
-After the `v0.1.0` release is available:
+The Python package name is `agent-worklog`. The command is still `worklog`.
 
 ```sh
 pipx install "git+https://github.com/cathrynlavery/worklog.git@v0.1.0"
@@ -322,6 +322,8 @@ Those boundaries are deliberate. The first release is a small local tool with a 
 ---
 
 ## Development
+
+Worklog requires Python 3.10 or newer. Apple's default `python3` is often still 3.9.
 
 ```sh
 python3 -m compileall worklog
