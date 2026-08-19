@@ -212,6 +212,20 @@ class DoctorTests(TempLedger):
         self.assertEqual(check.status, "ok")
         self.assertIn("2 session(s) tracked", check.message)
 
+    def test_hook_context_check_warns_about_a_shared_state_root(self) -> None:
+        shared = self.sandbox / "shared"
+        shared.mkdir(mode=0o755)
+        os.chmod(shared, 0o755)
+
+        with mock.patch.dict(os.environ, {"WORKLOG_STATE_DIR": str(shared)}):
+            check = self.named(run_checks(), "hook context")
+
+        self.assertEqual(check.status, "warn")
+        self.assertIn("group or world access", check.message)
+        self.assertIn("chmod 700", check.hint or "")
+        # doctor reports it rather than re-permissioning a caller's directory.
+        self.assertEqual(oct(os.stat(shared).st_mode)[-3:], "755")
+
     def test_hook_context_check_warns_when_state_is_unwritable(self) -> None:
         blocker = self.state_root / "hook-sessions"
         blocker.parent.mkdir(mode=0o700, parents=True, exist_ok=True)

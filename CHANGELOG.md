@@ -13,7 +13,7 @@ All notable changes to Worklog are documented here.
 ### Security
 
 - Hook state lives outside the ledger in `~/.local/state/worklog/hook-sessions`, with directory mode `0700` and file mode `0600`. Session IDs are sanitized and digest-suffixed before use as filenames, and state files are replaced atomically.
-- Hook state directories are tightened to `0700` even when they already existed with group or world access, so a permissive directory cannot expose session-derived filenames or activity metadata.
+- Hook state directories worklog owns are tightened to `0700` even when they already existed with group or world access, so a permissive directory cannot expose session-derived filenames or activity metadata. A `WORKLOG_STATE_DIR` the caller named is never re-permissioned, and a symlinked state directory is left alone rather than having its target re-permissioned; `worklog doctor` reports either case instead.
 
 ## 0.1.0 — 2026-08-16
 

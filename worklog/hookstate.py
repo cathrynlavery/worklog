@@ -18,7 +18,13 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .paths import enforce_private_dir, hook_state_dir, state_root
+from .paths import (
+    ensure_private_dir,
+    enforce_private_dir,
+    hook_state_dir,
+    state_root,
+    state_root_is_worklog_owned,
+)
 
 
 # Re-send the full instruction periodically so a long session cannot drift far
@@ -51,7 +57,10 @@ def _read_state(path: Path) -> dict[str, Any]:
 
 def _write_state(path: Path, state: dict[str, Any]) -> None:
     """Replace path atomically so a concurrent turn never reads a torn file."""
-    enforce_private_dir(state_root())
+    if state_root_is_worklog_owned():
+        enforce_private_dir(state_root())
+    else:
+        ensure_private_dir(state_root())
     enforce_private_dir(path.parent)
     temporary = path.with_name(f"{path.name}.{os.getpid()}.tmp")
     descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)

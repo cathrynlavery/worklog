@@ -64,7 +64,10 @@ still occupies the window and still competes for attention.
 Bookkeeping lives in `~/.local/state/worklog/hook-sessions` (directory mode
 `0700`, files mode `0600`), keyed by session ID so parallel terminals never
 share state. Override the location with `WORKLOG_STATE_DIR` or `XDG_STATE_HOME`.
-A state directory that already exists with looser modes is tightened on use.
+A state directory worklog created is tightened to `0700` on use even if it
+already existed with looser modes. A `WORKLOG_STATE_DIR` you named yourself
+may be shared with other tools, so worklog reports a loose mode there rather
+than changing it, and it never chmods through a symlink.
 
 Nothing here is load-bearing. If the state directory is missing, unwritable, or
 corrupt, the hook sends the full rule, which is the behaviour it had before this

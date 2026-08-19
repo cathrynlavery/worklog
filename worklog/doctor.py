@@ -16,7 +16,15 @@ from typing import Literal
 
 from .hook import build_context, build_response, build_terse_context
 from .hookstate import REASSERT_EVERY_TURNS
-from .paths import enforce_private_dir, hook_state_dir, ledger_root, state_root
+from .paths import (
+    ensure_private_dir,
+    enforce_private_dir,
+    hook_state_dir,
+    is_private_dir,
+    ledger_root,
+    state_root,
+    state_root_is_worklog_owned,
+)
 from .view import collect_entries, parse_session_file
 
 
@@ -542,7 +550,10 @@ def _check_hook_context() -> Check:
     directory = hook_state_dir()
     saved = len(build_context("session")) - len(build_terse_context("session"))
     try:
-        enforce_private_dir(state_root())
+        if state_root_is_worklog_owned():
+            enforce_private_dir(state_root())
+        else:
+            ensure_private_dir(state_root())
         enforce_private_dir(directory)
         sessions, saw_transcript_path = _hook_state_summary()
     except OSError as error:
@@ -556,6 +567,27 @@ def _check_hook_context() -> Check:
             hint=(
                 "Make the directory writable, or set WORKLOG_STATE_DIR to a "
                 "writable path, to shorten repeat prompts."
+            ),
+        )
+
+    permissive = [
+        candidate
+        for candidate in (state_root(), directory)
+        if not is_private_dir(candidate)
+    ]
+    if permissive:
+        return Check(
+            name="hook context",
+            status="warn",
+            message=(
+                f"{_path_text(permissive[0])} allows group or world access, so "
+                "session filenames and activity metadata are readable by other "
+                "local users."
+            ),
+            hint=(
+                "worklog only tightens directories it owns, and never follows a "
+                "symlink to do it. Run chmod 700 on that path, or point "
+                "WORKLOG_STATE_DIR at a directory worklog can own."
             ),
         )
 

@@ -10,7 +10,7 @@ from unittest import mock
 
 from worklog import hookstate
 from worklog.hookstate import REASSERT_EVERY_TURNS, decide, needs_full_instruction
-from worklog.paths import hook_state_dir, state_root
+from worklog.paths import hook_state_dir, state_root, state_root_is_worklog_owned
 
 from tests.support import TempLedger, permission_mode
 
@@ -87,13 +87,53 @@ class HookStateTests(TempLedger):
     def test_permissive_state_directory_is_tightened(self) -> None:
         directory = hook_state_dir()
         directory.mkdir(mode=0o755, parents=True)
-        os.chmod(state_root(), 0o755)
         os.chmod(directory, 0o755)
 
         needs_full_instruction("session-abc")
 
         self.assertEqual(permission_mode(directory), 0o700)
-        self.assertEqual(permission_mode(state_root()), 0o700)
+
+    def test_a_caller_named_state_root_is_never_re_permissioned(self) -> None:
+        # WORKLOG_STATE_DIR may name a directory shared with other tools.
+        shared = self.sandbox / "shared"
+        shared.mkdir(mode=0o755)
+        os.chmod(shared, 0o755)
+        with mock.patch.dict(os.environ, {"WORKLOG_STATE_DIR": str(shared)}):
+            self.assertFalse(state_root_is_worklog_owned())
+
+            needs_full_instruction("session-abc")
+
+            self.assertEqual(permission_mode(shared), 0o755)
+            # The leaf worklog creates is still its own to protect.
+            self.assertEqual(permission_mode(shared / "hook-sessions"), 0o700)
+
+    def test_a_default_state_root_is_tightened(self) -> None:
+        environment = dict(os.environ)
+        environment.pop("WORKLOG_STATE_DIR", None)
+        with mock.patch.dict(os.environ, environment, clear=True):
+            self.assertTrue(state_root_is_worklog_owned())
+            root = state_root()
+            root.mkdir(mode=0o755, parents=True)
+            os.chmod(root, 0o755)
+
+            needs_full_instruction("session-abc")
+
+            self.assertEqual(permission_mode(root), 0o700)
+
+    def test_a_symlinked_state_directory_is_left_alone(self) -> None:
+        # chmod follows symlinks, so hardening one would re-permission a
+        # target that belongs to someone else.
+        target = self.sandbox / "elsewhere"
+        target.mkdir(mode=0o755)
+        os.chmod(target, 0o755)
+        state_root().mkdir(mode=0o700, parents=True)
+        hook_state_dir().symlink_to(target, target_is_directory=True)
+
+        needs_full_instruction("session-abc")
+
+        self.assertEqual(permission_mode(target), 0o755)
+        # State is still written, just into the directory the user chose.
+        self.assertEqual(len(list(target.iterdir())), 1)
 
     def test_permissive_state_directory_is_tightened_by_doctor(self) -> None:
         directory = hook_state_dir()

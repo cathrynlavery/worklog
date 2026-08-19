@@ -87,15 +87,40 @@ def hook_state_dir() -> Path:
     return state_root() / "hook-sessions"
 
 
+def state_root_is_worklog_owned() -> bool:
+    """Report whether the state root is a worklog-named directory we create.
+
+    A WORKLOG_STATE_DIR the caller chose may be shared with other tools, so its
+    mode is the caller's business. The XDG and home defaults both end in a
+    `worklog` component that only this tool creates.
+    """
+    return not os.environ.get("WORKLOG_STATE_DIR")
+
+
 def enforce_private_dir(path: Path) -> Path:
-    """Create path and tighten it to 0700 even when it already existed.
+    """Create path and tighten it to 0700 when worklog owns it outright.
 
     ensure_private_dir only sets the mode on levels it creates, which leaves a
     pre-existing directory readable by group or other. Hook state is entirely
-    regenerable and owned by worklog, so tightening it is always safe: there is
-    no user-arranged content here to disturb.
+    regenerable and worklog-created, so tightening it disturbs no user-arranged
+    content.
+
+    A symlink is left alone: chmod would follow it and re-permission a target
+    that belongs to someone else. Call state_root_is_worklog_owned() before
+    hardening a root the caller named.
     """
     ensure_private_dir(path)
-    if stat.S_IMODE(os.stat(path).st_mode) & 0o077:
-        os.chmod(path, 0o700)
-    return Path(path)
+    directory = Path(path)
+    if directory.is_symlink():
+        return directory
+    if stat.S_IMODE(os.stat(directory).st_mode) & 0o077:
+        os.chmod(directory, 0o700)
+    return directory
+
+
+def is_private_dir(path: Path) -> bool:
+    """Report whether path exists with no group or world access."""
+    try:
+        return not stat.S_IMODE(os.stat(path).st_mode) & 0o077
+    except OSError:
+        return False
