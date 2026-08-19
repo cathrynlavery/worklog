@@ -110,6 +110,12 @@ conversational/no-op turns, secrets, credentials, PHI, raw transcripts, or
 unverified claims.
 ```
 
+The hook fires on every prompt but writes nothing. It supplies the session ID
+and the recording rule, then leaves the decision to Claude. To keep that cheap,
+the full rule is sent on the first turn of a session and a short reminder on
+later turns — about a 60% reduction per repeat prompt — with the full rule
+re-sent after a compaction. See [the adapter notes](adapters/claude-code.md#what-the-hook-costs).
+
 ### Codex
 
 Add this rule to `AGENTS.md`:
@@ -142,7 +148,7 @@ Detailed adapter notes:
 - [Codex](adapters/codex.md)
 - [Generic agents](adapters/generic.md)
 
-Run `worklog doctor` after connecting an agent. It checks the interpreter, ledger, permissions, contents, Claude hook, Codex rule, redactor, and Git integration without printing credential files.
+Run `worklog doctor` after connecting an agent. It checks the interpreter, ledger, permissions, contents, Claude hook, hook context savings, Codex rule, redactor, and Git integration without printing credential files.
 
 ---
 

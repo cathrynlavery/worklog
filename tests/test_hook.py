@@ -10,7 +10,7 @@ import unittest
 from unittest import mock
 
 from worklog.cli import main as cli_main
-from worklog.hook import build_response, main
+from worklog.hook import build_context, build_response, build_terse_context, main
 
 from tests.support import TempLedger
 
@@ -71,6 +71,53 @@ class HookTests(TempLedger):
         self.run_hook('{"session_id": "session-abc"}')
 
         self.assertFalse(self.root.exists())
+
+    def test_first_turn_is_full_and_repeat_turns_are_terse(self) -> None:
+        _, first = self.run_hook('{"session_id": "session-abc"}')
+        _, second = self.run_hook('{"session_id": "session-abc"}')
+
+        self.assertEqual(self.additional_context(first), build_context("session-abc"))
+        self.assertEqual(
+            self.additional_context(second),
+            build_terse_context("session-abc"),
+        )
+
+    def test_terse_reminder_keeps_the_command_and_the_session_id(self) -> None:
+        self.run_hook('{"session_id": "session-abc"}')
+        _, response = self.run_hook('{"session_id": "session-abc"}')
+        reminder = self.additional_context(response)
+
+        self.assertIn("worklog add", reminder)
+        self.assertIn("session-abc", reminder)
+        self.assertIn("Evidence is required", reminder)
+
+    def test_terse_reminder_is_substantially_shorter(self) -> None:
+        session_id = "cceecc41-d8a4-41b8-8fb8-9939d6dcf66e"
+
+        full = build_context(session_id)
+        terse = build_terse_context(session_id)
+
+        self.assertLess(len(terse), len(full) // 2)
+
+    def test_unknown_session_never_degrades_to_the_terse_reminder(self) -> None:
+        for _ in range(3):
+            _, response = self.run_hook("{}")
+            self.assertEqual(self.additional_context(response), build_context("unknown"))
+
+    def test_parallel_sessions_each_receive_the_full_instruction(self) -> None:
+        _, first = self.run_hook('{"session_id": "session-one"}')
+        _, second = self.run_hook('{"session_id": "session-two"}')
+
+        self.assertEqual(self.additional_context(first), build_context("session-one"))
+        self.assertEqual(self.additional_context(second), build_context("session-two"))
+
+    def test_session_id_is_shell_quoted_in_both_forms(self) -> None:
+        payload = json.dumps({"session_id": "a'b"})
+        _, first = self.run_hook(payload)
+        _, second = self.run_hook(payload)
+
+        for response in (first, second):
+            self.assertIn("""'a'"'"'b'""", self.additional_context(response))
 
     def test_build_response_uses_claude_code_protocol(self) -> None:
         response = build_response("session-abc")

@@ -62,3 +62,25 @@ def sessions_dir() -> Path:
 def reports_dir() -> Path:
     """Return the directory containing generated reports."""
     return ledger_root() / "reports"
+
+
+def state_root() -> Path:
+    """Return the root for ephemeral hook state without creating it.
+
+    Hook bookkeeping is regenerable and deliberately kept out of the ledger so
+    that losing it costs one verbose instruction, never a checkpoint.
+    """
+    configured = os.environ.get("WORKLOG_STATE_DIR")
+    if configured:
+        return _absolute_without_resolving(configured)
+
+    xdg_state_home = os.environ.get("XDG_STATE_HOME")
+    if xdg_state_home:
+        return _absolute_without_resolving(Path(xdg_state_home) / "worklog")
+
+    return _absolute_without_resolving(Path.home() / ".local" / "state" / "worklog")
+
+
+def hook_state_dir() -> Path:
+    """Return the directory holding per-session prompt-hook state."""
+    return state_root() / "hook-sessions"

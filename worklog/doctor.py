@@ -14,8 +14,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from .hook import build_response
-from .paths import ledger_root
+from .hook import build_context, build_response, build_terse_context
+from .hookstate import REASSERT_EVERY_TURNS
+from .paths import ensure_private_dir, hook_state_dir, ledger_root
 from .view import collect_entries, parse_session_file
 
 
@@ -519,6 +520,61 @@ def _check_claude_hook() -> Check:
     )
 
 
+def _hook_state_summary() -> tuple[int, bool]:
+    """Return tracked session count and whether compaction detection is live."""
+    sessions = 0
+    saw_transcript_path = False
+    for entry in hook_state_dir().iterdir():
+        if not entry.is_file():
+            continue
+        sessions += 1
+        try:
+            with entry.open(encoding="utf-8") as handle:
+                state = json.load(handle)
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            continue
+        if isinstance(state, dict) and state.get("saw_transcript_path"):
+            saw_transcript_path = True
+    return sessions, saw_transcript_path
+
+
+def _check_hook_context() -> Check:
+    directory = hook_state_dir()
+    saved = len(build_context("session")) - len(build_terse_context("session"))
+    try:
+        ensure_private_dir(directory)
+        sessions, saw_transcript_path = _hook_state_summary()
+    except OSError as error:
+        return Check(
+            name="hook context",
+            status="warn",
+            message=(
+                f"Could not use {_path_text(directory)} ({_error_text(error)}); "
+                "every prompt will carry the full checkpoint instruction."
+            ),
+            hint=(
+                "Make the directory writable, or set WORKLOG_STATE_DIR to a "
+                "writable path, to shorten repeat prompts."
+            ),
+        )
+
+    detail = (
+        "compaction re-sends the full rule"
+        if saw_transcript_path
+        else "no transcript path seen yet, so the full rule re-sends every "
+        f"{REASSERT_EVERY_TURNS} turns"
+    )
+    return Check(
+        name="hook context",
+        status="ok",
+        message=(
+            f"Repeat prompts drop about {saved} characters of instruction "
+            f"({sessions} session(s) tracked in {_path_text(directory)}; "
+            f"{detail})."
+        ),
+    )
+
+
 def _check_codex_adapter() -> Check:
     instructions = Path.home() / ".codex" / "AGENTS.md"
     hint = f"Add worklog checkpoint instructions to {_path_text(instructions)}."
@@ -613,6 +669,7 @@ def run_checks() -> list[Check]:
         ("ledger contents", _check_ledger_contents),
         ("unparsable files", _check_unparsable_files),
         ("claude code hook", _check_claude_hook),
+        ("hook context", _check_hook_context),
         ("codex adapter", _check_codex_adapter),
         ("redactor", _check_redactor),
         ("git", _check_git),
