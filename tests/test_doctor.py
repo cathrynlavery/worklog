@@ -10,6 +10,7 @@ from unittest import mock
 
 from worklog.cli import main
 from worklog.doctor import Check, render_checks, run_checks, worst_status
+from worklog.hookstate import needs_full_instruction
 
 from tests.support import TempLedger, private_mkdir, write_session
 
@@ -31,7 +32,7 @@ class DoctorTests(TempLedger):
 
         checks = run_checks()
 
-        self.assertEqual(len(checks), 9)
+        self.assertEqual(len(checks), 10)
         self.assertEqual(self.named(checks, "ledger root").status, "ok")
 
     def test_run_checks_handles_root_that_is_a_file(self) -> None:
@@ -62,7 +63,7 @@ class DoctorTests(TempLedger):
         finally:
             os.chmod(sessions, 0o700)
 
-        self.assertEqual(len(checks), 9)
+        self.assertEqual(len(checks), 10)
         self.assertIn(self.named(checks, "ledger contents").status, {"ok", "warn"})
 
     def test_run_checks_handles_malformed_settings_json(self) -> None:
@@ -194,6 +195,55 @@ class DoctorTests(TempLedger):
         self.assertEqual(after, before)
         self.assertFalse(any(name.startswith(".worklog-doctor-") for name in after))
         self.assertEqual(self.named(checks, "ledger root").status, "ok")
+
+    def test_hook_context_check_reports_savings(self) -> None:
+        check = self.named(run_checks(), "hook context")
+
+        self.assertEqual(check.status, "ok")
+        self.assertIn("Repeat prompts drop about", check.message)
+        self.assertIn("0 session(s) tracked", check.message)
+
+    def test_hook_context_check_counts_tracked_sessions(self) -> None:
+        needs_full_instruction("session-one")
+        needs_full_instruction("session-two")
+
+        check = self.named(run_checks(), "hook context")
+
+        self.assertEqual(check.status, "ok")
+        self.assertIn("2 session(s) tracked", check.message)
+
+    def test_hook_context_check_warns_about_a_shared_state_root(self) -> None:
+        shared = self.sandbox / "shared"
+        shared.mkdir(mode=0o755)
+        os.chmod(shared, 0o755)
+
+        with mock.patch.dict(os.environ, {"WORKLOG_STATE_DIR": str(shared)}):
+            check = self.named(run_checks(), "hook context")
+
+        self.assertEqual(check.status, "warn")
+        self.assertIn("group or world access", check.message)
+        self.assertIn("chmod 700", check.hint or "")
+        # doctor reports it rather than re-permissioning a caller's directory.
+        self.assertEqual(oct(os.stat(shared).st_mode)[-3:], "755")
+
+    def test_hook_context_check_warns_when_state_is_unwritable(self) -> None:
+        blocker = self.state_root / "hook-sessions"
+        blocker.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        blocker.write_text("not a directory", encoding="utf-8")
+
+        check = self.named(run_checks(), "hook context")
+
+        self.assertEqual(check.status, "warn")
+        self.assertIn("full checkpoint instruction", check.message)
+
+    def test_hook_context_check_notes_compaction_detection(self) -> None:
+        transcript = self.sandbox / "transcript.jsonl"
+        transcript.write_text("x" * 32, encoding="utf-8")
+        needs_full_instruction("session-abc", str(transcript))
+
+        check = self.named(run_checks(), "hook context")
+
+        self.assertIn("compaction re-sends the full rule", check.message)
 
     def test_worst_status_and_cli_exit_code_mapping(self) -> None:
         warning = [Check("example", "warn", "warning only")]

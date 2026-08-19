@@ -12,7 +12,9 @@ from unittest import mock
 
 CONTROLLED_ENVIRONMENT = (
     "WORKLOG_DIR",
+    "WORKLOG_STATE_DIR",
     "XDG_DATA_HOME",
+    "XDG_STATE_HOME",
     "WORKLOG_REDACTOR",
     "HOME",
     "CODEX_THREAD_ID",
@@ -32,6 +34,7 @@ class TempLedger(unittest.TestCase):
         self.root = self.sandbox / "ledger"
         self.home = self.sandbox / "home"
         self.xdg_data_home = self.sandbox / "xdg"
+        self.state_root = self.sandbox / "state"
         self.home.mkdir(mode=0o700)
 
         environment = {
@@ -39,6 +42,7 @@ class TempLedger(unittest.TestCase):
             "PATH": os.defpath,
             "PWD": str(self.sandbox),
             "WORKLOG_DIR": str(self.root),
+            "WORKLOG_STATE_DIR": str(self.state_root),
             "XDG_DATA_HOME": str(self.xdg_data_home),
         }
         self._environment = mock.patch.dict(os.environ, environment, clear=True)

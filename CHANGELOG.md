@@ -2,6 +2,19 @@
 
 All notable changes to Worklog are documented here.
 
+## Unreleased
+
+### Added
+
+- Session-aware prompt-hook context: the full checkpoint rule is sent on the first turn of a session and a short reminder on later turns, cutting about 60% of the per-prompt instruction. The full rule is re-sent after a compaction and every 25 turns.
+- A `hook context` diagnostic in `worklog doctor` reporting the current savings, the number of tracked sessions, and whether compaction detection is active.
+- `WORKLOG_STATE_DIR` and `XDG_STATE_HOME` support for relocating hook state.
+
+### Security
+
+- Hook state lives outside the ledger in `~/.local/state/worklog/hook-sessions`, with directory mode `0700` and file mode `0600`. Session IDs are sanitized and digest-suffixed before use as filenames, and state files are replaced atomically.
+- Hook state directories worklog owns are tightened to `0700` even when they already existed with group or world access, so a permissive directory cannot expose session-derived filenames or activity metadata. A `WORKLOG_STATE_DIR` the caller named is never re-permissioned, and a symlinked state directory is left alone rather than having its target re-permissioned; `worklog doctor` reports either case instead.
+
 ## 0.1.0 — 2026-08-16
 
 ### Added

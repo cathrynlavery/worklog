@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import stat
 from pathlib import Path
 
 
@@ -62,3 +63,64 @@ def sessions_dir() -> Path:
 def reports_dir() -> Path:
     """Return the directory containing generated reports."""
     return ledger_root() / "reports"
+
+
+def state_root() -> Path:
+    """Return the root for ephemeral hook state without creating it.
+
+    Hook bookkeeping is regenerable and deliberately kept out of the ledger so
+    that losing it costs one verbose instruction, never a checkpoint.
+    """
+    configured = os.environ.get("WORKLOG_STATE_DIR")
+    if configured:
+        return _absolute_without_resolving(configured)
+
+    xdg_state_home = os.environ.get("XDG_STATE_HOME")
+    if xdg_state_home:
+        return _absolute_without_resolving(Path(xdg_state_home) / "worklog")
+
+    return _absolute_without_resolving(Path.home() / ".local" / "state" / "worklog")
+
+
+def hook_state_dir() -> Path:
+    """Return the directory holding per-session prompt-hook state."""
+    return state_root() / "hook-sessions"
+
+
+def state_root_is_worklog_owned() -> bool:
+    """Report whether the state root is a worklog-named directory we create.
+
+    A WORKLOG_STATE_DIR the caller chose may be shared with other tools, so its
+    mode is the caller's business. The XDG and home defaults both end in a
+    `worklog` component that only this tool creates.
+    """
+    return not os.environ.get("WORKLOG_STATE_DIR")
+
+
+def enforce_private_dir(path: Path) -> Path:
+    """Create path and tighten it to 0700 when worklog owns it outright.
+
+    ensure_private_dir only sets the mode on levels it creates, which leaves a
+    pre-existing directory readable by group or other. Hook state is entirely
+    regenerable and worklog-created, so tightening it disturbs no user-arranged
+    content.
+
+    A symlink is left alone: chmod would follow it and re-permission a target
+    that belongs to someone else. Call state_root_is_worklog_owned() before
+    hardening a root the caller named.
+    """
+    ensure_private_dir(path)
+    directory = Path(path)
+    if directory.is_symlink():
+        return directory
+    if stat.S_IMODE(os.stat(directory).st_mode) & 0o077:
+        os.chmod(directory, 0o700)
+    return directory
+
+
+def is_private_dir(path: Path) -> bool:
+    """Report whether path exists with no group or world access."""
+    try:
+        return not stat.S_IMODE(os.stat(path).st_mode) & 0o077
+    except OSError:
+        return False
