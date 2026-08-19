@@ -16,7 +16,7 @@ from typing import Literal
 
 from .hook import build_context, build_response, build_terse_context
 from .hookstate import REASSERT_EVERY_TURNS
-from .paths import ensure_private_dir, hook_state_dir, ledger_root
+from .paths import enforce_private_dir, hook_state_dir, ledger_root, state_root
 from .view import collect_entries, parse_session_file
 
 
@@ -542,7 +542,8 @@ def _check_hook_context() -> Check:
     directory = hook_state_dir()
     saved = len(build_context("session")) - len(build_terse_context("session"))
     try:
-        ensure_private_dir(directory)
+        enforce_private_dir(state_root())
+        enforce_private_dir(directory)
         sessions, saw_transcript_path = _hook_state_summary()
     except OSError as error:
         return Check(

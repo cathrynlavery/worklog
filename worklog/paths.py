@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import stat
 from pathlib import Path
 
 
@@ -84,3 +85,17 @@ def state_root() -> Path:
 def hook_state_dir() -> Path:
     """Return the directory holding per-session prompt-hook state."""
     return state_root() / "hook-sessions"
+
+
+def enforce_private_dir(path: Path) -> Path:
+    """Create path and tighten it to 0700 even when it already existed.
+
+    ensure_private_dir only sets the mode on levels it creates, which leaves a
+    pre-existing directory readable by group or other. Hook state is entirely
+    regenerable and owned by worklog, so tightening it is always safe: there is
+    no user-arranged content here to disturb.
+    """
+    ensure_private_dir(path)
+    if stat.S_IMODE(os.stat(path).st_mode) & 0o077:
+        os.chmod(path, 0o700)
+    return Path(path)

@@ -10,7 +10,7 @@ from unittest import mock
 
 from worklog import hookstate
 from worklog.hookstate import REASSERT_EVERY_TURNS, decide, needs_full_instruction
-from worklog.paths import hook_state_dir
+from worklog.paths import hook_state_dir, state_root
 
 from tests.support import TempLedger, permission_mode
 
@@ -83,6 +83,36 @@ class HookStateTests(TempLedger):
         self.assertEqual(len(files), 1)
         self.assertEqual(permission_mode(files[0]), 0o600)
         self.assertFalse(self.root.exists())
+
+    def test_permissive_state_directory_is_tightened(self) -> None:
+        directory = hook_state_dir()
+        directory.mkdir(mode=0o755, parents=True)
+        os.chmod(state_root(), 0o755)
+        os.chmod(directory, 0o755)
+
+        needs_full_instruction("session-abc")
+
+        self.assertEqual(permission_mode(directory), 0o700)
+        self.assertEqual(permission_mode(state_root()), 0o700)
+
+    def test_permissive_state_directory_is_tightened_by_doctor(self) -> None:
+        directory = hook_state_dir()
+        directory.mkdir(mode=0o755, parents=True)
+        os.chmod(directory, 0o755)
+
+        from worklog.doctor import run_checks
+
+        run_checks()
+
+        self.assertEqual(permission_mode(directory), 0o700)
+
+    def test_group_and_world_bits_are_stripped_from_state_files(self) -> None:
+        needs_full_instruction("session-abc")
+        needs_full_instruction("session-abc")
+
+        for path in hook_state_dir().iterdir():
+            with self.subTest(path=path.name):
+                self.assertEqual(permission_mode(path), 0o600)
 
     def test_state_file_name_survives_a_hostile_session_id(self) -> None:
         needs_full_instruction("../../escape/../id with spaces")
